@@ -45,6 +45,7 @@ SET(SRCS_COMMON
   messages.cc
   mimic.cc
   modules.cc
+  monster_spell.cc
   monster_type.cc
   monster1.cc
   monster2.cc
@@ -53,6 +54,7 @@ SET(SRCS_COMMON
   object1.cc
   object2.cc
   object_filter.cc
+  object_flag_meta.cc
   options.cc
   powers.cc
   q_betwen.cc
@@ -96,14 +98,12 @@ SET(SRCS_COMMON
   spells5.cc
   spells6.cc
   squeltch.cc
-  status.cc
   store.cc
   tables.cc
   traps.cc
   util.cc
   variable.cc
   wild.cc
-  wizard1.cc
   wizard2.cc
   xtra1.cc
   xtra2.cc

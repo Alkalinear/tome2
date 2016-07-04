@@ -16,14 +16,17 @@
 #include "cmd2.hpp"
 #include "dungeon_flag.hpp"
 #include "dungeon_info_type.hpp"
+#include "feature_flag.hpp"
 #include "feature_type.hpp"
 #include "files.hpp"
 #include "gods.hpp"
 #include "monster2.hpp"
 #include "monster_race.hpp"
+#include "monster_race_flag.hpp"
 #include "monster_type.hpp"
 #include "object1.hpp"
 #include "object2.hpp"
+#include "object_flag.hpp"
 #include "object_kind.hpp"
 #include "player_race.hpp"
 #include "player_race_mod.hpp"
@@ -123,7 +126,7 @@ static bool_ do_trap_teleport_away(object_type *i_ptr, s16b y, s16b x)
 		c_ptr = &cave[y1][x1];
 
 		/* Require floor space (or shallow terrain) -KMW- */
-		if (!(f_info[c_ptr->feat].flags1 & FF1_FLOOR)) continue;
+		if (!(f_info[c_ptr->feat].flags & FF_FLOOR)) continue;
 
 		o_idx = drop_near(i_ptr, 0, y1, x1);
 	}
@@ -222,8 +225,8 @@ static bool_ player_handle_trap_of_walls(void)
 				auto const r_ptr = m_ptr->race();
 
 				/* Most monsters cannot co-exist with rock */
-				if ((!(r_ptr->flags2 & RF2_KILL_WALL)) &&
-				                (!(r_ptr->flags2 & RF2_PASS_WALL)))
+				if ((!(r_ptr->flags & RF_KILL_WALL)) &&
+				                (!(r_ptr->flags & RF_PASS_WALL)))
 				{
 					char m_name[80];
 
@@ -231,7 +234,7 @@ static bool_ player_handle_trap_of_walls(void)
 					sn = 0;
 
 					/* Monster can move to escape the wall */
-					if (!(r_ptr->flags1 & RF1_NEVER_MOVE))
+					if (!(r_ptr->flags & RF_NEVER_MOVE))
 					{
 						/* Look for safety */
 						for (i = 0; i < 8; i++)
@@ -346,7 +349,7 @@ static bool_ player_handle_trap_of_walls(void)
 			/* Destroy location (if valid) */
 			if ((cx < cur_wid) && (cy < cur_hgt) && cave_valid_bold(cy, cx))
 			{
-				bool_ floor = (f_info[cave[cy][cx].feat].flags1 & FF1_FLOOR);
+				bool floor = bool(f_info[cave[cy][cx].feat].flags & FF_FLOOR);
 
 				/* Delete any object that is still there */
 				delete_object(cy, cx);
@@ -973,7 +976,6 @@ bool_ player_activate_trap_type(s16b y, s16b x, object_type *i_ptr, s16b item)
 		{
 			s16b i, j, slot1, slot2;
 			object_type *j_ptr, *k_ptr;
-			u32b f1, f2, f3, f4, f5, esp;
 
 			for (i = INVEN_WIELD; i < INVEN_TOTAL; i++)
 			{
@@ -982,8 +984,8 @@ bool_ player_activate_trap_type(s16b y, s16b x, object_type *i_ptr, s16b item)
 				if (!j_ptr->k_idx) continue;
 
 				/* Do not allow this trap to touch the One Ring */
-				object_flags(j_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
-				if(f3 & TR3_PERMA_CURSE) continue;
+				auto const j_flags = object_flags(j_ptr);
+				if(j_flags & TR_PERMA_CURSE) continue;
 
 				slot1 = wield_slot(j_ptr);
 
@@ -994,8 +996,8 @@ bool_ player_activate_trap_type(s16b y, s16b x, object_type *i_ptr, s16b item)
 					if (!k_ptr->k_idx) continue;
 
 					/* Do not allow this trap to touch the One Ring */
-					object_flags(k_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
-					if(f3 & TR3_PERMA_CURSE) continue;
+					auto const k_flags = object_flags(k_ptr);
+					if(k_flags & TR_PERMA_CURSE) continue;
 
 					/* this is a crude hack, but it prevent wielding 6 torches... */
 					if (k_ptr->number > 1) continue;
@@ -1423,9 +1425,7 @@ bool_ player_activate_trap_type(s16b y, s16b x, object_type *i_ptr, s16b item)
 
 	case TRAP_OF_DRAIN_SPEED:
 		{
-			object_type *j_ptr;
 			s16b j, chance = 75;
-			u32b f1, f2, f3, f4, f5, esp;
 
 			for (j = 0; j < INVEN_TOTAL; j++)
 			{
@@ -1434,11 +1434,11 @@ bool_ player_activate_trap_type(s16b y, s16b x, object_type *i_ptr, s16b item)
 
 				if (!p_ptr->inventory[j].k_idx) continue;
 
-				j_ptr = &p_ptr->inventory[j];
-				object_flags(j_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
+				auto j_ptr = &p_ptr->inventory[j];
+				auto const flags = object_flags(j_ptr);
 
 				/* is it a non-artifact speed item? */
-				if ((!j_ptr->name1) && (f1 & TR1_SPEED))
+				if ((!j_ptr->name1) && (flags & TR_SPEED))
 				{
 					if (randint(100) < chance)
 					{
@@ -1905,7 +1905,7 @@ void player_activate_door_trap(s16b y, s16b x)
 
 	/* Return if trap or door not found */
 	if ((c_ptr->t_idx == 0) ||
-	                !(f_info[c_ptr->feat].flags1 & FF1_DOOR)) return;
+	                !(f_info[c_ptr->feat].flags & FF_DOOR)) return;
 
 	/* Disturb */
 	disturb(0);
@@ -1953,10 +1953,10 @@ void place_trap(int y, int x)
 
 	/* Traps only appears on empty floor */
 	if (!cave_floor_grid(c_ptr) &&
-	                !(f_info[c_ptr->feat].flags1 & (FF1_DOOR))) return;
+	                !(f_info[c_ptr->feat].flags & FF_DOOR)) return;
 
 	/* Set flags */
-	if (f_info[c_ptr->feat].flags1 & FF1_DOOR) flags = FTRAP_DOOR;
+	if (f_info[c_ptr->feat].flags & FF_DOOR) flags = FTRAP_DOOR;
 	else flags = FTRAP_FLOOR;
 
 	/* Try 100 times */
@@ -2055,7 +2055,7 @@ void wiz_place_trap(int y, int x, int idx)
 	cave_type *c_ptr = &cave[y][x];
 
 	/* Dangerous enough as it is... */
-	if (!cave_floor_grid(c_ptr) && (!(f_info[c_ptr->feat].flags1 & FF1_DOOR))) return;
+	if (!cave_floor_grid(c_ptr) && (!(f_info[c_ptr->feat].flags & FF_DOOR))) return;
 
 	c_ptr->t_idx = idx;
 }
@@ -2089,8 +2089,6 @@ void do_cmd_set_trap(void)
 	cptr q, s, c;
 
 	object_type object_type_body;
-
-	u32b f1, f2, f3, f4, f5, esp;
 
 	/* Check some conditions */
 	if (p_ptr->blind)
@@ -2166,11 +2164,11 @@ void do_cmd_set_trap(void)
 	/* In some cases, take multiple objects to load */
 	if (o_ptr->sval != SV_TRAPKIT_DEVICE)
 	{
-		object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
+		auto const flags = object_flags(o_ptr);
 
-		if ((f3 & TR3_XTRA_SHOTS) && (o_ptr->pval > 0)) num += o_ptr->pval;
+		if ((flags & TR_XTRA_SHOTS) && (o_ptr->pval > 0)) num += o_ptr->pval;
 
-		if (f2 & (TRAP2_AUTOMATIC_5 | TRAP2_AUTOMATIC_99)) num = 99;
+		if (flags & (TR_AUTOMATIC_5 | TR_AUTOMATIC_99)) num = 99;
 
 		if (num > j_ptr->number) num = j_ptr->number;
 
@@ -2450,7 +2448,7 @@ bool_ mon_hit_trap_aux_scroll(int m_idx, int sval)
 			monster_race *r_ptr = &r_info[m_ptr->r_idx];
 			genocide_aux(FALSE, r_ptr->d_char);
 			/* although there's no point in a multiple genocide trap... */
-			return (!(r_ptr->flags1 & RF1_UNIQUE));
+			return (!(r_ptr->flags & RF_UNIQUE));
 		}
 	case SV_SCROLL_MASS_GENOCIDE:
 		for (k = 0; k < 8; k++)
@@ -2613,7 +2611,7 @@ bool_ mon_hit_trap_aux_potion(int m_idx, object_type *o_ptr)
 		case SV_POTION_LIFE:
 			{
 				monster_race *r_ptr = &r_info[m_ptr->r_idx];
-				if (r_ptr->flags3 & RF3_UNDEAD)
+				if (r_ptr->flags & RF_UNDEAD)
 				{
 					typ = GF_HOLY_FIRE;
 					dam = damroll(20, 20);
@@ -2647,8 +2645,6 @@ bool_ mon_hit_trap(int m_idx)
 	monster_type *m_ptr = &m_list[m_idx];
 	monster_race *r_ptr = &r_info[m_ptr->r_idx];
 
-	u32b f1, f2, f3, f4, f5, esp;
-
 	object_type object_type_body;
 
 	int mx = m_ptr->fx;
@@ -2679,21 +2675,21 @@ bool_ mon_hit_trap(int m_idx)
 	auto j_ptr = &object_type_body;
 
 	/* Get trap properties */
-	object_flags(kit_o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
+	auto const flags = object_flags(kit_o_ptr);
 
 	/* Can set off check */
 	/* Ghosts only set off Ghost traps */
-	if ((r_ptr->flags2 & RF2_PASS_WALL) && !(f2 & TRAP2_KILL_GHOST)) return (FALSE);
+	if ((r_ptr->flags & RF_PASS_WALL) && !(flags & TR_KILL_GHOST)) return (FALSE);
 
 	/* Some traps are specialized to some creatures */
-	if (f2 & TRAP2_ONLY_MASK)
+	if (flags & (TR_ONLY_DRAGON | TR_ONLY_DEMON | TR_ONLY_ANIMAL | TR_ONLY_UNDEAD | TR_ONLY_EVIL))
 	{
 		bool_ affect = FALSE;
-		if ((f2 & TRAP2_ONLY_DRAGON) && (r_ptr->flags3 & RF3_DRAGON)) affect = TRUE;
-		if ((f2 & TRAP2_ONLY_DEMON) && (r_ptr->flags3 & RF3_DEMON)) affect = TRUE;
-		if ((f2 & TRAP2_ONLY_UNDEAD) && (r_ptr->flags3 & RF3_UNDEAD)) affect = TRUE;
-		if ((f2 & TRAP2_ONLY_EVIL) && (r_ptr->flags3 & RF3_EVIL)) affect = TRUE;
-		if ((f2 & TRAP2_ONLY_ANIMAL) && (r_ptr->flags3 & RF3_ANIMAL)) affect = TRUE;
+		if ((flags & TR_ONLY_DRAGON) && (r_ptr->flags & RF_DRAGON)) affect = TRUE;
+		if ((flags & TR_ONLY_DEMON) && (r_ptr->flags & RF_DEMON)) affect = TRUE;
+		if ((flags & TR_ONLY_UNDEAD) && (r_ptr->flags & RF_UNDEAD)) affect = TRUE;
+		if ((flags & TR_ONLY_EVIL) && (r_ptr->flags & RF_EVIL)) affect = TRUE;
+		if ((flags & TR_ONLY_ANIMAL) && (r_ptr->flags & RF_ANIMAL)) affect = TRUE;
 
 		/* Don't set it off if forbidden */
 		if (!affect) return (FALSE);
@@ -2703,7 +2699,7 @@ bool_ mon_hit_trap(int m_idx)
 	difficulty = 25;
 
 	/* Some traps are well-hidden */
-	if (f1 & TR1_STEALTH)
+	if (flags & TR_STEALTH)
 	{
 		difficulty += 10 * (kit_o_ptr->pval);
 	}
@@ -2713,13 +2709,13 @@ bool_ mon_hit_trap(int m_idx)
 	smartness = r_ptr->level;
 
 	/* Smart monsters are better at detecting traps */
-	if (r_ptr->flags2 & RF2_SMART) smartness += 10;
+	if (r_ptr->flags & RF_SMART) smartness += 10;
 
 	/* Some monsters have already noticed one of out traps */
 	if (m_ptr->smart & SM_NOTE_TRAP) smartness += 20;
 
 	/* Stupid monsters are no good at detecting traps */
-	if (r_ptr->flags2 & (RF2_STUPID | RF2_EMPTY_MIND)) smartness = -150;
+	if (r_ptr->flags & (RF_STUPID | RF_EMPTY_MIND)) smartness = -150;
 
 	/* Check if the monster notices the trap */
 	if (randint(300) > (difficulty - smartness + 150)) notice = TRUE;
@@ -2738,13 +2734,13 @@ bool_ mon_hit_trap(int m_idx)
 		smartness = r_ptr->level / 5;
 
 		/* Smart monsters are better at disarming */
-		if (r_ptr->flags2 & RF2_SMART) smartness *= 2;
+		if (r_ptr->flags & RF_SMART) smartness *= 2;
 
 		/* Stupid monsters never disarm traps */
-		if (r_ptr->flags2 & RF2_STUPID) smartness = -150;
+		if (r_ptr->flags & RF_STUPID) smartness = -150;
 
 		/* Nonsmart animals never disarm traps */
-		if ((r_ptr->flags3 & RF3_ANIMAL) && !(r_ptr->flags2 & RF2_SMART)) smartness = -150;
+		if ((r_ptr->flags & RF_ANIMAL) && !(r_ptr->flags & RF_SMART)) smartness = -150;
 
 		/* Check if the monster disarms the trap */
 		if (randint(120) > (difficulty - smartness + 80)) disarm = TRUE;
@@ -2794,7 +2790,7 @@ bool_ mon_hit_trap(int m_idx)
 			{
 				/* Get number of shots */
 				shots = 1;
-				if (f3 & TR3_XTRA_SHOTS) shots += kit_o_ptr->pval;
+				if (flags & TR_XTRA_SHOTS) shots += kit_o_ptr->pval;
 				if (shots <= 0) shots = 1;
 				if (shots > load_o_ptr->number) shots = load_o_ptr->number;
 
@@ -2810,7 +2806,7 @@ bool_ mon_hit_trap(int m_idx)
 					if (kit_o_ptr->sval == SV_TRAPKIT_BOW) mul = 3;
 					if (kit_o_ptr->sval == SV_TRAPKIT_XBOW) mul = 4;
 					if (kit_o_ptr->sval == SV_TRAPKIT_SLING) mul = 2;
-					if (f3 & TR3_XTRA_MIGHT) mul += kit_o_ptr->pval;
+					if (flags & TR_XTRA_MIGHT) mul += kit_o_ptr->pval;
 					if (mul < 0) mul = 0;
 
 					/* Multiply damage */
@@ -2823,9 +2819,9 @@ bool_ mon_hit_trap(int m_idx)
 						cptr note_dies = " dies.";
 
 						/* Some monsters get "destroyed" */
-						if ((r_ptr->flags3 & (RF3_DEMON)) ||
-						                (r_ptr->flags3 & (RF3_UNDEAD)) ||
-						                (r_ptr->flags2 & (RF2_STUPID)) ||
+						if ((r_ptr->flags & RF_DEMON) ||
+						                (r_ptr->flags & RF_UNDEAD) ||
+						                (r_ptr->flags & RF_STUPID) ||
 						                (strchr("Evg", r_ptr->d_char)))
 						{
 							/* Special note at death */
@@ -2931,7 +2927,7 @@ bool_ mon_hit_trap(int m_idx)
 			{
 				/* Get number of shots */
 				shots = 1;
-				if (f3 & TR3_XTRA_SHOTS) shots += kit_o_ptr->pval;
+				if (flags & TR_XTRA_SHOTS) shots += kit_o_ptr->pval;
 				if (shots <= 0) shots = 1;
 				if (shots > load_o_ptr->number) shots = load_o_ptr->number;
 
@@ -2972,7 +2968,7 @@ bool_ mon_hit_trap(int m_idx)
 			{
 				/* Get number of shots */
 				shots = 1;
-				if (f3 & TR3_XTRA_SHOTS) shots += kit_o_ptr->pval;
+				if (flags & TR_XTRA_SHOTS) shots += kit_o_ptr->pval;
 				if (shots <= 0) shots = 1;
 				if (shots > load_o_ptr->number) shots = load_o_ptr->number;
 
@@ -3014,16 +3010,15 @@ bool_ mon_hit_trap(int m_idx)
 				if (load_o_ptr->tval == TV_ROD_MAIN)
 				{
 					/* Extract mana cost of the rod tip */
-					u32b tf1, tf2, tf3, tf4, tf5, tesp;
 					object_kind *tip_o_ptr = &k_info[lookup_kind(TV_ROD, load_o_ptr->pval)];
-					object_flags(load_o_ptr, &tf1, &tf2, &tf3, &tf4, &tf5, &tesp);
-					cost = (tf4 & TR4_CHEAPNESS) ? tip_o_ptr->pval / 2 : tip_o_ptr->pval;
+					auto const tflags = object_flags(load_o_ptr);
+					cost = (tflags & TR_CHEAPNESS) ? tip_o_ptr->pval / 2 : tip_o_ptr->pval;
 					if (cost <= 0) cost = 1;
 				}
 
 				/* Get number of shots */
 				shots = 1;
-				if (f3 & TR3_XTRA_SHOTS) shots += kit_o_ptr->pval;
+				if (flags & TR_XTRA_SHOTS) shots += kit_o_ptr->pval;
 				if (shots <= 0) shots = 1;
 
 				if (load_o_ptr->tval == TV_ROD_MAIN)
@@ -3072,16 +3067,16 @@ bool_ mon_hit_trap(int m_idx)
 		}
 
 		/* Non-automatic traps are removed */
-		if (!(f2 & (TRAP2_AUTOMATIC_5 | TRAP2_AUTOMATIC_99)))
+		if (!(flags & (TR_AUTOMATIC_5 | TR_AUTOMATIC_99)))
 		{
 			remove = TRUE;
 		}
-		else if (f2 & TRAP2_AUTOMATIC_5) remove = (randint(5) == 1);
+		else if (flags & TR_AUTOMATIC_5) remove = (randint(5) == 1);
 
 	}
 
 	/* Special trap effect -- teleport to */
-	if ((f2 & TRAP2_TELEPORT_TO) && (!disarm) && (!dead))
+	if ((flags & TR_TELEPORT_TO) && (!disarm) && (!dead))
 	{
 		teleport_monster_to(m_idx, p_ptr->py, p_ptr->px);
 	}

@@ -2,6 +2,7 @@
 
 #include "h-basic.h"
 #include "identify_mode.hpp"
+#include "monster_race_flag_set.hpp"
 #include "object_filter.hpp"
 #include "object_type_fwd.hpp"
 
@@ -32,7 +33,7 @@ extern bool detect_objects_gold(int rad);
 extern bool detect_objects_normal(int rad);
 extern bool_ detect_monsters_normal(int rad);
 extern bool_ detect_monsters_invis(int rad);
-extern bool_ detect_monsters_xxx(u32b match_flag, int rad);
+extern void detect_monsters_orcs(int rad);
 extern bool_ detect_all(int rad);
 extern void stair_creation(void);
 extern bool_ wall_stone(int y, int x);
@@ -46,8 +47,6 @@ extern void aggravate_monsters(int who);
 extern bool_ genocide_aux(bool_ player_cast, char typ);
 extern bool_ genocide(bool_ player_cast);
 extern bool_ mass_genocide(bool_ player_cast);
-extern void do_probe(int m_idx);
-extern bool_ probing(void);
 extern void change_wild_mode(void);
 extern bool_ banish_evil(int dist);
 extern bool_ dispel_evil(int dam);
@@ -112,4 +111,4 @@ extern void geomancy_random_wall(int y, int x);
 extern void geomancy_random_floor(int y, int x, bool_ kill_wall);
 extern void geomancy_dig(int oy, int ox, int dir, int length);
 extern void channel_the_elements(int y, int x, int level);
-extern void random_resistance (object_type * o_ptr, bool_ is_scroll, int specific);
+extern void random_resistance(object_type *o_ptr, int specific);

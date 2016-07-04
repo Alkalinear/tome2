@@ -14,6 +14,7 @@
 #include "corrupt.hpp"
 #include "dungeon_info_type.hpp"
 #include "ego_item_type.hpp"
+#include "feature_flag.hpp"
 #include "feature_type.hpp"
 #include "files.hpp"
 #include "gods.hpp"
@@ -27,14 +28,17 @@
 #include "monster3.hpp"
 #include "monster_ego.hpp"
 #include "monster_race.hpp"
+#include "monster_race_flag.hpp"
 #include "monster_type.hpp"
 #include "notes.hpp"
 #include "object1.hpp"
 #include "object2.hpp"
+#include "object_flag.hpp"
 #include "object_kind.hpp"
 #include "options.hpp"
 #include "player_class.hpp"
 #include "player_race.hpp"
+#include "player_race_flag.hpp"
 #include "player_race_mod.hpp"
 #include "player_type.hpp"
 #include "point.hpp"
@@ -1359,7 +1363,7 @@ bool_ set_stun(int v)
 	/* Hack -- Force good values */
 	v = (v > 10000) ? 10000 : (v < 0) ? 0 : v;
 
-	if (race_flags1_p(PR1_NO_STUN)) v = 0;
+	if (race_flags_p(PR_NO_STUN)) v = 0;
 
 	/* Knocked out */
 	if (p_ptr->stun > 100)
@@ -1520,7 +1524,7 @@ bool_ set_cut(int v)
 	/* Hack -- Force good values */
 	v = (v > 10000) ? 10000 : (v < 0) ? 0 : v;
 
-	if (race_flags1_p(PR1_NO_CUT)) v = 0;
+	if (race_flags_p(PR_NO_CUT)) v = 0;
 
 	/* Mortal wound */
 	if (p_ptr->cut > 1000)
@@ -1995,7 +1999,7 @@ void check_experience(void)
 		if (p_ptr->lev > p_ptr->max_plv)
 		{
 			p_ptr->max_plv = p_ptr->lev;
-			if ((race_flags1_p(PR1_CORRUPT)) &&
+			if ((race_flags_p(PR_CORRUPT)) &&
 			                (randint(3) == 1))
 			{
 				level_corruption = TRUE;
@@ -2090,7 +2094,7 @@ void check_experience_obj(object_type *o_ptr)
  */
 void gain_exp(s32b amount)
 {
-	if ((p_ptr->max_exp > 0) && (race_flags1_p(PR1_CORRUPT)))
+	if ((p_ptr->max_exp > 0) && (race_flags_p(PR_CORRUPT)))
 	{
 		if ((randint(p_ptr->max_exp) < amount) || (randint(12000000) < amount))
 		{
@@ -2182,13 +2186,13 @@ void place_corpse(monster_type *m_ptr)
 	auto const r_ptr = m_ptr->race();
 
 	/* It has a physical form */
-	if (r_ptr->flags9 & RF9_DROP_CORPSE)
+	if (r_ptr->flags & RF_DROP_CORPSE)
 	{
 		/* Wipe the object */
 		object_prep(i_ptr, lookup_kind(TV_CORPSE, SV_CORPSE_CORPSE));
 
 		/* Unique corpses are unique */
-		if (r_ptr->flags1 & RF1_UNIQUE)
+		if (r_ptr->flags & RF_UNIQUE)
 		{
 			object_aware(i_ptr);
 			i_ptr->name1 = 201;
@@ -2218,13 +2222,13 @@ void place_corpse(monster_type *m_ptr)
 	}
 
 	/* The creature is an animated skeleton. */
-	if (!(r_ptr->flags9 & RF9_DROP_CORPSE) && (r_ptr->flags9 & RF9_DROP_SKELETON))
+	if (!(r_ptr->flags & RF_DROP_CORPSE) && (r_ptr->flags & RF_DROP_SKELETON))
 	{
 		/* Wipe the object */
 		object_prep(i_ptr, lookup_kind(TV_CORPSE, SV_CORPSE_SKELETON));
 
 		/* Unique corpses are unique */
-		if (r_ptr->flags1 & RF1_UNIQUE)
+		if (r_ptr->flags & RF_UNIQUE)
 		{
 			object_aware(i_ptr);
 			i_ptr->name1 = 201;
@@ -2470,14 +2474,9 @@ static void monster_death_gods(int m_idx, monster_type *m_ptr)
  */
 void monster_death(int m_idx)
 {
-	int dump_item = 0;
-	int dump_gold = 0;
-
 	monster_type *m_ptr = &m_list[m_idx];
 
 	auto const r_ptr = m_ptr->race();
-
-	bool_ visible = (m_ptr->ml || (r_ptr->flags1 & (RF1_UNIQUE)));
 
 	bool_ create_stairs = FALSE;
 	int force_coin = get_coin_type(r_ptr);
@@ -2525,7 +2524,7 @@ void monster_death(int m_idx)
 	}
 
 	/* If the doppleganger die, the variable must be set accordingly */
-	if (r_ptr->flags9 & RF9_DOPPLEGANGER) doppleganger = 0;
+	if (r_ptr->flags & RF_DOPPLEGANGER) doppleganger = 0;
 
 	/* Need copy of object list since we're going to mutate it */
 	auto const object_idxs(m_ptr->hold_o_idxs);
@@ -2547,9 +2546,6 @@ void monster_death(int m_idx)
 
 		/* Delete the object */
 		delete_object_idx(this_o_idx);
-
-		if (q_ptr->tval == TV_GOLD) dump_gold++;
-		else dump_item++;
 
 		/* Drop it */
 		drop_near(q_ptr, -1, y, x);
@@ -2579,24 +2575,34 @@ void monster_death(int m_idx)
 		q_ptr->dd = 6;
 		q_ptr->pval = 2;
 
-		q_ptr->art_flags1 |= ( TR1_VAMPIRIC | TR1_STR | TR1_CON | TR1_BLOWS );
-		q_ptr->art_flags2 |= ( TR2_FREE_ACT | TR2_HOLD_LIFE |
-		                       TR2_RES_NEXUS | TR2_RES_CHAOS | TR2_RES_NETHER |
-		                       TR2_RES_CONF );  /* No longer resist_disen */
-		q_ptr->art_flags3 |= ( TR3_IGNORE_ACID | TR3_IGNORE_ELEC |
-		                       TR3_IGNORE_FIRE | TR3_IGNORE_COLD);
-		/* Just to be sure */
+		q_ptr->art_flags |=
+			TR_VAMPIRIC |
+			TR_STR |
+			TR_CON |
+			TR_BLOWS |
+			TR_FREE_ACT |
+			TR_HOLD_LIFE |
+			TR_RES_NEXUS |
+			TR_RES_CHAOS |
+			TR_RES_NETHER |
+			TR_RES_CONF |
+			TR_IGNORE_ACID |
+			TR_IGNORE_ELEC |
+			TR_IGNORE_FIRE |
+			TR_IGNORE_COLD |
+			TR_NO_TELE |
+			TR_CURSED |
+			TR_HEAVY_CURSE;
 
-		q_ptr->art_flags3 |= TR3_NO_TELE;  /* How's that for a downside? */
-
-		/* For game balance... */
-		q_ptr->art_flags3 |= (TR3_CURSED | TR3_HEAVY_CURSE);
 		q_ptr->ident |= IDENT_CURSED;
-
 		if (randint(2) == 1)
-			q_ptr->art_flags3 |= (TR3_DRAIN_EXP);
+		{
+			q_ptr->art_flags |= TR_DRAIN_EXP;
+		}
 		else
-			q_ptr->art_flags3 |= (TR3_AGGRAVATE);
+		{
+			q_ptr->art_flags |= TR_AGGRAVATE;
+		}
 
 		q_ptr->found = OBJ_FOUND_MONSTER;
 		q_ptr->found_aux1 = m_ptr->r_idx;
@@ -2679,7 +2685,7 @@ void monster_death(int m_idx)
 	}
 
 	/* Mega-Hack -- drop "winner" treasures */
-	else if (r_ptr->flags1 & (RF1_DROP_CHOSEN))
+	else if (r_ptr->flags & RF_DROP_CHOSEN)
 	{
 		if (strstr(r_ptr->name, "Morgoth, Lord of Darkness"))
 		{
@@ -2741,7 +2747,7 @@ void monster_death(int m_idx)
 			/* Drop it in the dungeon */
 			drop_near(q_ptr, -1, y, x);
 		}
-		else if (r_ptr->flags7 & RF7_NAZGUL)
+		else if (r_ptr->flags & RF_NAZGUL)
 		{
 			/* Get local object */
 			q_ptr = &forge;
@@ -2806,7 +2812,7 @@ void monster_death(int m_idx)
 					q_ptr->weight = a_ptr->weight;
 
 					/* Hack -- acquire "cursed" flag */
-					if (a_ptr->flags3 & (TR3_CURSED)) q_ptr->ident |= (IDENT_CURSED);
+					if (a_ptr->flags & TR_CURSED) q_ptr->ident |= (IDENT_CURSED);
 
 					random_artifact_resistance(q_ptr);
 
@@ -2826,7 +2832,7 @@ void monster_death(int m_idx)
 	}
 
 	/* Hack - the protected monsters must be advanged */
-	else if (r_ptr->flags9 & RF9_WYRM_PROTECT)
+	else if (r_ptr->flags & RF_WYRM_PROTECT)
 	{
 		int xx = x, yy = y;
 		int attempts = 100;
@@ -2964,13 +2970,6 @@ void monster_death(int m_idx)
 	if ((!force_coin) && (magik(10 + get_skill_scale(SKILL_PRESERVATION, 75))) && (!(m_ptr->mflag & MFLAG_NO_DROP)))
 		place_corpse(m_ptr);
 
-	/* Take note of any dropped treasure */
-	if (visible && (dump_item || dump_gold))
-	{
-		/* Take notes on treasure */
-		lore_treasure(m_idx, dump_item, dump_gold);
-	}
-
 	/* Create a magical staircase */
 	if (create_stairs && (dun_level < d_info[dungeon_type].maxdepth))
 	{
@@ -2978,7 +2977,7 @@ void monster_death(int m_idx)
 		{
 			for (int j = -1; j <= 1; j++)
 			{
-				if (!(f_info[cave[y + j][x + i].feat].flags1 & FF1_PERMANENT))
+				if (!(f_info[cave[y + j][x + i].feat].flags & FF_PERMANENT))
 				{
 					cave_set_feat(y + j, x + i, d_info[dungeon_type].floor1);
 				}
@@ -3051,7 +3050,7 @@ bool_ mon_take_hit(int m_idx, int dam, bool_ *fear, cptr note)
 	if (health_who == m_idx) p_ptr->redraw |= (PR_FRAME);
 
 	/* Some mosnters are immune to death */
-	if (r_ptr->flags7 & RF7_NO_DEATH) return FALSE;
+	if (r_ptr->flags & RF_NO_DEATH) return FALSE;
 
 	/* Wake it up */
 	m_ptr->csleep = 0;
@@ -3075,7 +3074,7 @@ bool_ mon_take_hit(int m_idx, int dam, bool_ *fear, cptr note)
 		/* Extract monster name */
 		monster_desc(m_name, m_ptr, 0);
 
-		if ((r_ptr->flags7 & RF7_DG_CURSE) && (randint(2) == 1))
+		if ((r_ptr->flags & RF_DG_CURSE) && (randint(2) == 1))
 		{
 			int curses = 2 + randint(5);
 
@@ -3089,7 +3088,7 @@ bool_ mon_take_hit(int m_idx, int dam, bool_ *fear, cptr note)
 			while (--curses);
 		}
 
-		if (r_ptr->flags2 & (RF2_CAN_SPEAK))
+		if (r_ptr->flags & RF_CAN_SPEAK)
 		{
 			char line_got[80];
 			/* Dump a message */
@@ -3115,10 +3114,10 @@ bool_ mon_take_hit(int m_idx, int dam, bool_ *fear, cptr note)
 		}
 
 		/* Death by Physical attack -- non-living monster */
-		else if ((r_ptr->flags3 & (RF3_DEMON)) ||
-		                (r_ptr->flags3 & (RF3_UNDEAD)) ||
-		                (r_ptr->flags2 & (RF2_STUPID)) ||
-		                (r_ptr->flags3 & (RF3_NONLIVING)) ||
+		else if ((r_ptr->flags & RF_DEMON) ||
+		                (r_ptr->flags & RF_UNDEAD) ||
+		                (r_ptr->flags & RF_STUPID) ||
+		                (r_ptr->flags & RF_NONLIVING) ||
 		                (strchr("Evg", r_ptr->d_char)))
 		{
 			cmsg_format(TERM_L_RED, "You have destroyed %s.", m_name);
@@ -3159,15 +3158,12 @@ bool_ mon_take_hit(int m_idx, int dam, bool_ *fear, cptr note)
 
 		if (!note)
 		{
-			object_type *o_ptr;
-			u32b f1, f2, f3, f4, f5, esp;
-
 			/* Access the weapon */
-			o_ptr = &p_ptr->inventory[INVEN_WIELD];
-			object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
+			object_type *o_ptr = &p_ptr->inventory[INVEN_WIELD];
+			auto const flags = object_flags(o_ptr);
 
 			/* Can the weapon gain levels ? */
-			if ((o_ptr->k_idx) && (f4 & TR4_LEVELS))
+			if ((o_ptr->k_idx) && (flags & TR_LEVELS))
 			{
 				/* Give some experience for the kill */
 				const int new_exp = ((long)r_ptr->mexp * m_ptr->level) / (div * 2);
@@ -3179,7 +3175,7 @@ bool_ mon_take_hit(int m_idx, int dam, bool_ *fear, cptr note)
 		}
 
 		/* When the player kills a Unique, it stays dead */
-		if (r_ptr->flags1 & (RF1_UNIQUE))
+		if (r_ptr->flags & RF_UNIQUE)
 		{
 			r_ptr->max_num = 0;
 		}
@@ -3188,7 +3184,7 @@ bool_ mon_take_hit(int m_idx, int dam, bool_ *fear, cptr note)
 		monster_death(m_idx);
 
 		/* Eru doesn't appreciate good monster death */
-		if (r_ptr->flags3 & RF3_GOOD)
+		if (r_ptr->flags & RF_GOOD)
 		{
 			inc_piety(GOD_ERU, -7 * m_ptr->level);
 			inc_piety(GOD_MANWE, -10 * m_ptr->level);
@@ -3200,7 +3196,7 @@ bool_ mon_take_hit(int m_idx, int dam, bool_ *fear, cptr note)
 		}
 
 		/* Manwe appreciate evil monster death */
-		if (r_ptr->flags3 & RF3_EVIL)
+		if (r_ptr->flags & RF_EVIL)
 		{
 			int inc = std::max(1, m_ptr->level / 2);
 
@@ -3216,7 +3212,7 @@ bool_ mon_take_hit(int m_idx, int dam, bool_ *fear, cptr note)
 			if (praying_to(GOD_TULKAS))
 			{
 				inc_piety(GOD_TULKAS, inc / 2);
-				if (r_ptr->flags3 & RF3_DEMON)
+				if (r_ptr->flags & RF_DEMON)
 				{
 					inc_piety(GOD_TULKAS, inc);
 				}
@@ -3224,7 +3220,7 @@ bool_ mon_take_hit(int m_idx, int dam, bool_ *fear, cptr note)
 		}
 
 		/* Yavanna likes when corruption is destroyed */
-		if ((r_ptr->flags3 & RF3_NONLIVING) || (r_ptr->flags3 & RF3_DEMON) || (r_ptr->flags3 & RF3_UNDEAD))
+		if ((r_ptr->flags & RF_NONLIVING) || (r_ptr->flags & RF_DEMON) || (r_ptr->flags & RF_UNDEAD))
 		{
 			int inc = std::max(1, m_ptr->level / 2);
 			inc_piety(GOD_YAVANNA, inc);
@@ -3237,12 +3233,12 @@ bool_ mon_take_hit(int m_idx, int dam, bool_ *fear, cptr note)
 			inc_piety(GOD_YAVANNA, -inc);
 
 			/* Killing animals in her name is a VERY bad idea */
-			if (r_ptr->flags3 & RF3_ANIMAL)
+			if (r_ptr->flags & RF_ANIMAL)
 				inc_piety(GOD_YAVANNA, -(inc * 3));
 		}
 
 		/* SHould we absorb its soul? */
-		if (p_ptr->absorb_soul && (!(r_ptr->flags3 & RF3_UNDEAD)) && (!(r_ptr->flags3 & RF3_NONLIVING)))
+		if (p_ptr->absorb_soul && (!(r_ptr->flags & RF_UNDEAD)) && (!(r_ptr->flags & RF_NONLIVING)))
 		{
 			msg_print("You absorb the life of the dying soul.");
 			hp_player(1 + (m_ptr->level / 2) + get_skill_scale(SKILL_NECROMANCY, 40));
@@ -3252,7 +3248,7 @@ bool_ mon_take_hit(int m_idx, int dam, bool_ *fear, cptr note)
 		* XXX XXX XXX Mega-Hack -- Remove random quest rendered
 		* impossible
 		*/
-		if (r_ptr->flags1 & (RF1_UNIQUE))
+		if (r_ptr->flags & RF_UNIQUE)
 		{
 			int i;
 
@@ -3280,7 +3276,7 @@ bool_ mon_take_hit(int m_idx, int dam, bool_ *fear, cptr note)
 		}
 
 		/* Make note of unique kills */
-		if (r_ptr->flags1 & RF1_UNIQUE)
+		if (r_ptr->flags & RF_UNIQUE)
 		{
 			char note[80];
 
@@ -3291,13 +3287,10 @@ bool_ mon_take_hit(int m_idx, int dam, bool_ *fear, cptr note)
 		}
 
 		/* Recall even invisible uniques or winners */
-		if (m_ptr->ml || (r_ptr->flags1 & (RF1_UNIQUE)))
+		if (m_ptr->ml || (r_ptr->flags & RF_UNIQUE))
 		{
 			/* Count kills this life */
 			if (r_ptr->r_pkills < MAX_SHORT) r_ptr->r_pkills++;
-
-			/* Count kills in all lives */
-			if (r_ptr->r_tkills < MAX_SHORT) r_ptr->r_tkills++;
 
 			/* Hack -- Auto-recall */
 			monster_race_track(m_ptr->r_idx, m_ptr->ego);
@@ -3638,9 +3631,9 @@ static cptr look_mon_desc(int m_idx)
 	/* Determine if the monster is "living" (vs "undead") */
 	monster_type *m_ptr = &m_list[m_idx];
 	auto const r_ptr = m_ptr->race();
-	if (r_ptr->flags3 & (RF3_UNDEAD)) living = FALSE;
-	if (r_ptr->flags3 & (RF3_DEMON)) living = FALSE;
-	if (r_ptr->flags3 & (RF3_NONLIVING)) living = FALSE;
+	if (r_ptr->flags & RF_UNDEAD) living = FALSE;
+	if (r_ptr->flags & RF_DEMON) living = FALSE;
+	if (r_ptr->flags & RF_NONLIVING) living = FALSE;
 	if (strchr("Egv", r_ptr->d_char)) living = FALSE;
 
 
@@ -3714,7 +3707,7 @@ static bool target_able(int m_idx)
 	if (is_friend(m_ptr) > 0) return (FALSE);
 
 	/* Honor flag */
-	if (r_info[m_ptr->r_idx].flags7 & RF7_NO_TARGET) return (FALSE);
+	if (r_info[m_ptr->r_idx].flags & RF_NO_TARGET) return (FALSE);
 
 	/* XXX XXX XXX Hack -- Never target trappers */
 	/* if (CLEAR_ATTR && (CLEAR_CHAR)) return (FALSE); */
@@ -3858,7 +3851,7 @@ static bool_ target_set_accept(int y, int x)
 		                (c_ptr->feat <= FEAT_DOOR_TAIL)) return (FALSE);
 
 		/* Accept 'naturally' interesting features */
-		if (f_info[c_ptr->feat].flags1 & FF1_NOTICE) return (TRUE);
+		if (f_info[c_ptr->feat].flags & FF_NOTICE) return (TRUE);
 	}
 
 	/* Nope */
@@ -4032,7 +4025,7 @@ static int target_set_aux(int y, int x, int mode, cptr info)
 			auto const r_ptr = m_ptr->race();
 
 			/* Mimics special treatment -- looks like an object */
-			if ((r_ptr->flags9 & RF9_MIMIC) && (m_ptr->csleep))
+			if ((r_ptr->flags & RF_MIMIC) && (m_ptr->csleep))
 			{
 				/* Acquire object */
 				object_type *o_ptr = &o_list[m_ptr->mimic_o_idx()];
@@ -4080,7 +4073,7 @@ static int target_set_aux(int y, int x, int mode, cptr info)
 							Term_save();
 
 							/* Recall on screen */
-							screen_roff(m_ptr->r_idx, m_ptr->ego, 0);
+							screen_roff(m_ptr->r_idx, m_ptr->ego);
 
 							/* Hack -- Complete the prompt (again) */
 							Term_addstr( -1, TERM_WHITE, format("  [r,%s]", info));
@@ -4155,8 +4148,8 @@ static int target_set_aux(int y, int x, int mode, cptr info)
 					s1 = "It is ";
 
 					/* Hack -- take account of gender */
-					if (r_ptr->flags1 & (RF1_FEMALE)) s1 = "She is ";
-					else if (r_ptr->flags1 & (RF1_MALE)) s1 = "He is ";
+					if (r_ptr->flags & RF_FEMALE) s1 = "She is ";
+					else if (r_ptr->flags & RF_MALE) s1 = "He is ";
 
 					/* Use a preposition */
 					s2 = "carrying ";
@@ -4429,8 +4422,6 @@ bool_ target_set(int mode)
 
 	char info[80];
 
-	cave_type *c_ptr;
-
 	int screen_wid, screen_hgt;
 	int panel_wid, panel_hgt;
 
@@ -4465,7 +4456,7 @@ bool_ target_set(int mode)
 			x = points[m].x();
 
 			/* Access */
-			c_ptr = &cave[y][x];
+			cave_type *c_ptr = &cave[y][x];
 
 			/* Allow target */
 			if (target_able(c_ptr->m_idx))
@@ -4631,9 +4622,6 @@ bool_ target_set(int mode)
 		/* Arbitrary grids */
 		else
 		{
-			/* Access */
-			c_ptr = &cave[y][x];
-
 			/* Default prompt */
 			strcpy(info, "q,t,p,m,+,-,'dir'");
 
@@ -5083,8 +5071,8 @@ static bool_ test_object_wish(char *name, object_type *o_ptr, object_type *forge
 		o_ptr = forge;
 
 		if (!k_ptr->name) continue;
-		if (k_ptr->flags3 & TR3_NORM_ART) continue;
-		if (k_ptr->flags3 & TR3_INSTA_ART) continue;
+		if (k_ptr->flags & TR_NORM_ART) continue;
+		if (k_ptr->flags & TR_INSTA_ART) continue;
 		if (k_ptr->tval == TV_GOLD) continue;
 
 		object_prep(o_ptr, i);
@@ -5290,9 +5278,9 @@ void make_wish(void)
 
 		if (!r_ptr->name) continue;
 
-		if (r_ptr->flags9 & RF9_SPECIAL_GENE) continue;
-		if (r_ptr->flags9 & RF9_NEVER_GENE) continue;
-		if (r_ptr->flags1 & RF1_UNIQUE) continue;
+		if (r_ptr->flags & RF_SPECIAL_GENE) continue;
+		if (r_ptr->flags & RF_NEVER_GENE) continue;
+		if (r_ptr->flags & RF_UNIQUE) continue;
 
 		sprintf(buf, "%s", r_ptr->name);
 		strlower(buf);
@@ -5378,11 +5366,6 @@ void switch_subrace(int racem, bool_ copy_old)
 	/* If we switch to the saved subrace, we copy over the old subrace data */
 	if (copy_old && (racem == SUBRACE_SAVE))
 	{
-		// This code is very reliant on the race_mod_info
-		// elements being simple PODs, in particular the
-		// text pointers being *unmanaged* owned pointers.
-		static_assert(std::is_pod<player_race_mod>::value,
-			      "This code needs reworking");
 		// Keep references to owned pointers.
 		auto old_title = race_mod_info[SUBRACE_SAVE].title;
 		auto old_desc = race_mod_info[SUBRACE_SAVE].desc;

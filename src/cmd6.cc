@@ -25,12 +25,16 @@
 #include "mimic.hpp"
 #include "monster2.hpp"
 #include "monster_race.hpp"
+#include "monster_race_flag.hpp"
+#include "monster_spell_flag.hpp"
 #include "monster_type.hpp"
 #include "object1.hpp"
 #include "object2.hpp"
+#include "object_flag.hpp"
 #include "object_kind.hpp"
 #include "object_type.hpp"
 #include "options.hpp"
+#include "player_race_flag.hpp"
 #include "player_type.hpp"
 #include "randart.hpp"
 #include "skills.hpp"
@@ -539,7 +543,7 @@ static void corpse_effect(object_type *o_ptr, bool_ cutting)
 	 */
 
 	/* Acid */
-	if (r_ptr->flags4 & RF4_BR_ACID && brpow > 0)
+	if ((r_ptr->spells & SF_BR_ACID) && brpow > 0)
 	{
 		brdam = ((brpow / 3) > 1600 ? 1600 : (brpow / 3));
 
@@ -554,13 +558,13 @@ static void corpse_effect(object_type *o_ptr, bool_ cutting)
 		}
 		o_ptr->pval = 1;
 	}
-	else if (r_ptr->flags4 & RF4_BR_ACID)
+	else if (r_ptr->spells & SF_BR_ACID)
 	{
 		set_oppose_acid(p_ptr->oppose_acid + rand_int(10) + 10);
 	}
 
 	/* Electricity */
-	if (r_ptr->flags4 & RF4_BR_ELEC && brpow > 0)
+	if ((r_ptr->spells & SF_BR_ELEC) && brpow > 0)
 	{
 		brdam = ((brpow / 3) > 1600 ? 1600 : (brpow / 3));
 
@@ -576,13 +580,13 @@ static void corpse_effect(object_type *o_ptr, bool_ cutting)
 		o_ptr->weight = o_ptr->weight - brpow;
 		o_ptr->pval = o_ptr->weight;
 	}
-	else if (r_ptr->flags4 & RF4_BR_ELEC)
+	else if (r_ptr->spells & SF_BR_ELEC)
 	{
 		set_oppose_elec(p_ptr->oppose_elec + rand_int(10) + 10);
 	}
 
 	/* Fire */
-	if (r_ptr->flags4 & RF4_BR_FIRE && brpow > 0)
+	if ((r_ptr->spells & SF_BR_FIRE) && brpow > 0)
 	{
 		brdam = ((brpow / 3) > 1600 ? 1600 : (brpow / 3));
 
@@ -597,13 +601,13 @@ static void corpse_effect(object_type *o_ptr, bool_ cutting)
 		}
 		o_ptr->pval = 1;
 	}
-	else if (r_ptr->flags4 & RF4_BR_FIRE)
+	else if (r_ptr->spells & SF_BR_FIRE)
 	{
 		set_oppose_fire(p_ptr->oppose_fire + rand_int(10) + 10);
 	}
 
 	/* Cold */
-	if (r_ptr->flags4 & RF4_BR_COLD && brpow > 0)
+	if ((r_ptr->spells & SF_BR_COLD) && brpow > 0)
 	{
 		brdam = ((brpow / 3) > 1600 ? 1600 : (brpow / 3));
 
@@ -619,13 +623,13 @@ static void corpse_effect(object_type *o_ptr, bool_ cutting)
 		o_ptr->weight = o_ptr->weight - brpow;
 		o_ptr->pval = o_ptr->weight;
 	}
-	else if (r_ptr->flags4 & RF4_BR_COLD)
+	else if (r_ptr->spells & SF_BR_COLD)
 	{
 		set_oppose_cold(p_ptr->oppose_cold + rand_int(10) + 10);
 	}
 
 	/* Poison */
-	if (r_ptr->flags4 & RF4_BR_POIS && brpow > 0)
+	if ((r_ptr->spells & SF_BR_POIS) && brpow > 0)
 	{
 		brdam = ((brpow / 3) > 800 ? 800 : (brpow / 3));
 
@@ -648,7 +652,7 @@ static void corpse_effect(object_type *o_ptr, bool_ cutting)
 	}
 
 	/* Nether */
-	if (r_ptr->flags4 & RF4_BR_NETH && brpow > 0)
+	if ((r_ptr->spells & SF_BR_NETH) && brpow > 0)
 	{
 		brdam = ((brpow / 6) > 550 ? 550 : (brpow / 6));
 
@@ -685,7 +689,7 @@ static void corpse_effect(object_type *o_ptr, bool_ cutting)
 	}
 
 	/* Confusion */
-	if (r_ptr->flags4 & RF4_BR_CONF && brpow > 0)
+	if ((r_ptr->spells & SF_BR_CONF) && brpow > 0)
 	{
 		msg_print("A strange liquid splashes on you!");
 
@@ -698,7 +702,7 @@ static void corpse_effect(object_type *o_ptr, bool_ cutting)
 	}
 
 	/* Chaos */
-	if (r_ptr->flags4 & RF4_BR_CHAO && brpow > 0)
+	if ((r_ptr->spells & SF_BR_CHAO) && brpow > 0)
 	{
 		brdam = ((brpow / 6) > 600 ? 600 : (brpow / 6));
 
@@ -744,7 +748,7 @@ static void corpse_effect(object_type *o_ptr, bool_ cutting)
 	}
 
 	/* Disenchantment */
-	if (r_ptr->flags4 & RF4_BR_DISE && brpow > 0)
+	if ((r_ptr->spells & SF_BR_DISE) && brpow > 0)
 	{
 		brdam = ((brpow / 6) > 500 ? 500 : (brpow / 6));
 
@@ -766,7 +770,7 @@ static void corpse_effect(object_type *o_ptr, bool_ cutting)
 	}
 
 	/* Plasma */
-	if (r_ptr->flags4 & RF4_BR_PLAS && brpow > 0)
+	if ((r_ptr->spells & SF_BR_PLAS) && brpow > 0)
 	{
 		brdam = ((brpow / 6) > 150 ? 150 : (brpow / 6));
 
@@ -788,7 +792,7 @@ static void corpse_effect(object_type *o_ptr, bool_ cutting)
 	}
 
 	/* Hack -- Jellies are immune to acid only if they are already acidic */
-	if (strchr("j", r_ptr->d_char) && (r_ptr->flags3 & RF3_IM_ACID))
+	if (strchr("j", r_ptr->d_char) && (r_ptr->flags & RF_IM_ACID))
 	{
 		dam = damroll(8, 8);
 
@@ -810,7 +814,7 @@ static void corpse_effect(object_type *o_ptr, bool_ cutting)
 	 * are immune to poison because their body already contains
 	 * poisonous chemicals.
 	 */
-	if (strchr("ijkmS,", r_ptr->d_char) && (r_ptr->flags3 & RF3_IM_POIS))
+	if (strchr("ijkmS,", r_ptr->d_char) && (r_ptr->flags & RF_IM_POIS))
 	{
 		if (!(p_ptr->resist_pois || p_ptr->oppose_pois))
 		{
@@ -825,82 +829,82 @@ static void corpse_effect(object_type *o_ptr, bool_ cutting)
 	 */
 	if (!harmful && !cutting && (o_ptr->sval != SV_CORPSE_MEAT))
 	{
-		if (r_ptr->flags3 & RF3_IM_ACID)
+		if (r_ptr->flags & RF_IM_ACID)
 		{
 			set_oppose_acid(p_ptr->oppose_acid + rand_int(10) + 10);
 		}
-		if (r_ptr->flags3 & RF3_IM_ELEC)
+		if (r_ptr->flags & RF_IM_ELEC)
 		{
 			set_oppose_elec(p_ptr->oppose_elec + rand_int(10) + 10);
 		}
-		if (r_ptr->flags3 & RF3_IM_FIRE)
+		if (r_ptr->flags & RF_IM_FIRE)
 		{
 			set_oppose_fire(p_ptr->oppose_fire + rand_int(10) + 10);
 		}
-		if (r_ptr->flags3 & RF3_IM_COLD)
+		if (r_ptr->flags & RF_IM_COLD)
 		{
 			set_oppose_cold(p_ptr->oppose_cold + rand_int(10) + 10);
 		}
-		if (r_ptr->flags3 & RF3_IM_POIS)
+		if (r_ptr->flags & RF_IM_POIS)
 		{
 			set_oppose_pois(p_ptr->oppose_pois + rand_int(10) + 10);
 		}
-		if (r_ptr->flags3 & RF3_RES_NETH)
+		if (r_ptr->flags & RF_RES_NETH)
 		{
 			set_protevil(p_ptr->protevil + rand_int(25) + 3 * r_ptr->level);
 		}
-		if (r_ptr->flags3 & RF3_RES_PLAS)
+		if (r_ptr->flags & RF_RES_PLAS)
 		{
 			set_oppose_fire(p_ptr->oppose_fire + rand_int(20) + 20);
 		}
-		if (r_ptr->flags2 & RF2_SHAPECHANGER)
+		if (r_ptr->flags & RF_SHAPECHANGER)
 		{
 			/* DGDGDG			(void)set_mimic(20 , rand_int(MIMIC_VALAR)); */
 		}
 
-		if (r_ptr->flags3 & RF3_DEMON)
+		if (r_ptr->flags & RF_DEMON)
 		{
 			/* DGDGDG			(void)set_mimic(30 , MIMIC_DEMON); */
 		}
 
-		if (r_ptr->flags3 & RF3_UNDEAD)
+		if (r_ptr->flags & RF_UNDEAD)
 		{
 			/* DGDGDG			(void)set_mimic(30 , MIMIC_VAMPIRE); */
 		}
 
-		if (r_ptr->flags3 & RF3_NO_FEAR)
+		if (r_ptr->flags & RF_NO_FEAR)
 		{
 			(void)set_afraid(0);
 		}
-		if (r_ptr->flags3 & RF3_NO_STUN)
+		if (r_ptr->flags & RF_NO_STUN)
 		{
 			(void)set_stun(0);
 		}
-		if (r_ptr->flags3 & RF3_NO_CONF)
+		if (r_ptr->flags & RF_NO_CONF)
 		{
 			(void)set_confused(0);
 		}
-		if (r_ptr->flags6 & RF6_S_THUNDERLORD)
+		if (r_ptr->spells & SF_S_THUNDERLORD)
 		{
 			summon_specific_friendly(p_ptr->py, p_ptr->px, dun_level, SUMMON_THUNDERLORD, FALSE);
 		}
-		if (r_ptr->flags6 & RF6_S_DEMON)
+		if (r_ptr->spells & SF_S_DEMON)
 		{
 			summon_specific_friendly(p_ptr->py, p_ptr->px, dun_level, SUMMON_DEMON, FALSE);
 		}
-		if (r_ptr->flags6 & RF6_S_KIN)
+		if (r_ptr->spells & SF_S_KIN)
 		{
 			summon_specific_friendly(p_ptr->py, p_ptr->px, dun_level, SUMMON_KIN, FALSE);
 		}
-		if (r_ptr->flags6 & RF6_S_HI_DEMON)
+		if (r_ptr->spells & SF_S_HI_DEMON)
 		{
 			summon_specific_friendly(p_ptr->py, p_ptr->px, dun_level, SUMMON_HI_DEMON, FALSE);
 		}
-		if (r_ptr->flags6 & RF6_S_MONSTER)
+		if (r_ptr->spells & SF_S_MONSTER)
 		{
 			summon_specific_friendly(p_ptr->py, p_ptr->px, dun_level, 0, FALSE);
 		}
-		if (r_ptr->flags6 & RF6_S_MONSTERS)
+		if (r_ptr->spells & SF_S_MONSTERS)
 		{
 			int k;
 			for (k = 0; k < 8; k++)
@@ -908,47 +912,47 @@ static void corpse_effect(object_type *o_ptr, bool_ cutting)
 				summon_specific_friendly(p_ptr->py, p_ptr->px, dun_level, 0, FALSE);
 			}
 		}
-		if (r_ptr->flags6 & RF6_S_UNDEAD)
+		if (r_ptr->spells & SF_S_UNDEAD)
 		{
 			summon_specific_friendly(p_ptr->py, p_ptr->px, dun_level, SUMMON_UNDEAD, FALSE);
 		}
-		if (r_ptr->flags6 & RF6_S_DRAGON)
+		if (r_ptr->spells & SF_S_DRAGON)
 		{
 			summon_specific_friendly(p_ptr->py, p_ptr->px, dun_level, SUMMON_DRAGON, FALSE);
 		}
-		if (r_ptr->flags6 & RF6_S_ANT)
+		if (r_ptr->spells & SF_S_ANT)
 		{
 			summon_specific_friendly(p_ptr->py, p_ptr->px, dun_level, SUMMON_ANT, FALSE);
 		}
-		if (r_ptr->flags6 & RF6_S_SPIDER)
+		if (r_ptr->spells & SF_S_SPIDER)
 		{
 			summon_specific_friendly(p_ptr->py, p_ptr->px, dun_level, SUMMON_SPIDER, FALSE);
 		}
-		if (r_ptr->flags6 & RF6_S_HOUND)
+		if (r_ptr->spells & SF_S_HOUND)
 		{
 			summon_specific_friendly(p_ptr->py, p_ptr->px, dun_level, SUMMON_HOUND, FALSE);
 		}
-		if (r_ptr->flags6 & RF6_S_HYDRA)
+		if (r_ptr->spells & SF_S_HYDRA)
 		{
 			summon_specific_friendly(p_ptr->py, p_ptr->px, dun_level, SUMMON_HYDRA, FALSE);
 		}
-		if (r_ptr->flags6 & RF6_S_ANGEL)
+		if (r_ptr->spells & SF_S_ANGEL)
 		{
 			summon_specific_friendly(p_ptr->py, p_ptr->px, dun_level, SUMMON_ANGEL, FALSE);
 		}
-		if (r_ptr->flags6 & RF6_S_HI_DRAGON)
+		if (r_ptr->spells & SF_S_HI_DRAGON)
 		{
 			summon_specific_friendly(p_ptr->py, p_ptr->px, dun_level, SUMMON_HI_DRAGON, FALSE);
 		}
-		if (r_ptr->flags6 & RF6_S_HI_UNDEAD)
+		if (r_ptr->spells & SF_S_HI_UNDEAD)
 		{
 			summon_specific_friendly(p_ptr->py, p_ptr->px, dun_level, SUMMON_HI_UNDEAD, FALSE);
 		}
-		if (r_ptr->flags6 & RF6_S_WRAITH)
+		if (r_ptr->spells & SF_S_WRAITH)
 		{
 			summon_specific_friendly(p_ptr->py, p_ptr->px, dun_level, SUMMON_WRAITH, FALSE);
 		}
-		if (r_ptr->flags6 & RF6_S_UNIQUE)
+		if (r_ptr->spells & SF_S_UNIQUE)
 		{
 			summon_specific_friendly(p_ptr->py, p_ptr->px, dun_level, SUMMON_UNIQUE, FALSE);
 		}
@@ -1371,7 +1375,7 @@ void do_cmd_eat_food(void)
 				/* Not all is edible. Apologies if messy. */
 
 				/* Check weight -- they have to have some meat left */
-				if (r_ptr->flags9 & RF9_DROP_SKELETON)
+				if (r_ptr->flags & RF_DROP_SKELETON)
 				{
 					if (o_ptr->weight <= (r_ptr->weight * 3) / 5)
 					{
@@ -1492,7 +1496,7 @@ void do_cmd_eat_food(void)
 	/* Food can feed the player, in a different ways */
 
 	/* Vampires */
-	if ((race_flags1_p(PR1_VAMPIRE)) || (p_ptr->mimic_form == resolve_mimic_name("Vampire")))
+	if ((race_flags_p(PR_VAMPIRE)) || (p_ptr->mimic_form == resolve_mimic_name("Vampire")))
 	{
 		/* Reduced nutritional benefit */
 		/*		(void)set_food(p_ptr->food + (fval / 10)); -- No more */
@@ -1505,9 +1509,9 @@ void do_cmd_eat_food(void)
 		}
 	}
 
-	else if (race_flags1_p(PR1_NO_FOOD))
+	else if (race_flags_p(PR_NO_FOOD))
 	{
-		if (race_flags1_p(PR1_UNDEAD))
+		if (race_flags_p(PR_UNDEAD))
 		{
 			msg_print("The food of mortals is poor sustenance for you.");
 		}
@@ -1565,7 +1569,7 @@ void do_cmd_cut_corpse(void)
 	{
 	case SV_CORPSE_CORPSE:
 		{
-			if (r_ptr->flags9 & RF9_DROP_SKELETON)
+			if (r_ptr->flags & RF_DROP_SKELETON)
 			{
 				not_meat = (r_ptr->weight * 3) / 5;
 			}
@@ -2765,10 +2769,7 @@ bool_ curse_armor(void)
 		o_ptr->ac = 0;
 		o_ptr->dd = 0;
 		o_ptr->ds = 0;
-		o_ptr->art_flags1 = 0;
-		o_ptr->art_flags2 = 0;
-		o_ptr->art_flags3 = 0;
-		o_ptr->art_flags4 = 0;
+		o_ptr->art_flags = object_flag_set();
 
 		/* Curse it */
 		o_ptr->ident |= (IDENT_CURSED);
@@ -2830,10 +2831,7 @@ bool_ curse_weapon(void)
 		o_ptr->ac = 0;
 		o_ptr->dd = 0;
 		o_ptr->ds = 0;
-		o_ptr->art_flags1 = 0;
-		o_ptr->art_flags2 = 0;
-		o_ptr->art_flags3 = 0;
-		o_ptr->art_flags4 = 0;
+		o_ptr->art_flags = object_flag_set();
 
 
 		/* Curse it */
@@ -2947,8 +2945,8 @@ void do_cmd_read_scroll(void)
 				{
 					monster_race *r_ptr = &r_info[k];
 
-					if (r_ptr->flags1 & RF1_UNIQUE &&
-					                !(r_ptr->flags9 & RF9_SPECIAL_GENE))
+					if (r_ptr->flags & RF_UNIQUE &&
+					                !(r_ptr->flags & RF_SPECIAL_GENE))
 					{
 						r_ptr->max_num = 1;
 					}
@@ -3699,8 +3697,6 @@ void do_cmd_use_staff(void)
 {
 	bool_ obvious, use_charge;
 
-	u32b f1, f2, f3, f4, f5, esp;
-
 	/* No magic */
 	if (p_ptr->antimagic)
 	{
@@ -3747,10 +3743,10 @@ void do_cmd_use_staff(void)
 	unset_stick_mode();
 
 	/* Extract object flags */
-	object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
+	auto const flags = object_flags(o_ptr);
 
 	/* Is it simple to use ? */
-	if (f4 & TR4_EASY_USE)
+	if (flags & TR_EASY_USE)
 	{
 		chance /= 3;
 	}
@@ -3876,9 +3872,6 @@ void do_cmd_aim_wand(void)
 {
 	bool_ obvious, use_charge;
 
-	u32b f1, f2, f3, f4, f5, esp;
-
-
 	/* No magic */
 	if (p_ptr->antimagic)
 	{
@@ -3925,10 +3918,10 @@ void do_cmd_aim_wand(void)
 	unset_stick_mode();
 
 	/* Extract object flags */
-	object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
+	auto const flags = object_flags(o_ptr);
 
 	/* Is it simple to use ? */
-	if (f4 & TR4_EASY_USE)
+	if (flags & TR_EASY_USE)
 	{
 		chance /= 3;
 	}
@@ -4039,12 +4032,6 @@ static bool item_tester_hook_attachable(object_type const *o_ptr)
  */
 void zap_combine_rod_tip(object_type *q_ptr, int tip_item)
 {
-	int item;
-
-	u32b f1, f2, f3, f4, f5, esp;
-	s32b cost;
-
-
 	/* No magic */
 	if (p_ptr->antimagic)
 	{
@@ -4053,6 +4040,7 @@ void zap_combine_rod_tip(object_type *q_ptr, int tip_item)
 	}
 
 	/* Get an item */
+	int item;
 	if (!get_item(&item,
 		      "Attach the rod tip with which rod? ",
 		      "You have no rod to attach to.",
@@ -4066,12 +4054,11 @@ void zap_combine_rod_tip(object_type *q_ptr, int tip_item)
 	object_type *o_ptr = get_object(item);
 
 	/* Examine the rod */
-	object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
+	auto const flags = object_flags(o_ptr);
 
 	/* Calculate rod tip's mana cost */
-	cost = q_ptr->pval;
-
-	if (f4 & TR4_CHEAPNESS)
+	s32b cost = q_ptr->pval;
+	if (flags & TR_CHEAPNESS)
 	{
 		cost /= 2;
 	}
@@ -4106,8 +4093,6 @@ void do_cmd_zap_rod(void)
 	bool_ require_dir;
 
 	object_kind *tip_ptr;
-
-	u32b f1, f2, f3, f4, f5, esp;
 
 	/* Hack -- let perception get aborted */
 	bool_ use_charge = TRUE;
@@ -4189,9 +4174,12 @@ void do_cmd_zap_rod(void)
 	energy_use = 100;
 
 	/* Examine the rod */
-	object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
+	auto const flags = object_flags(o_ptr);
 
-	if (f4 & TR4_FAST_CAST) energy_use /= 2;
+	if (flags & TR_FAST_CAST)
+	{
+		energy_use /= 2;
+	}
 
 	/* Not identified yet */
 	ident = FALSE;
@@ -4215,7 +4203,7 @@ void do_cmd_zap_rod(void)
 	}
 
 	/* Is it simple to use ? */
-	if (f4 & TR4_EASY_USE)
+	if (flags & TR_EASY_USE)
 	{
 		chance *= 10;
 	}
@@ -4244,7 +4232,7 @@ void do_cmd_zap_rod(void)
 	cost = tip_ptr->pval;
 
 	/* "Cheapness" ego halven the cost */
-	if (f4 & TR4_CHEAPNESS) cost = cost / 2;
+	if (flags & TR_CHEAPNESS) cost = cost / 2;
 
 	/* A single rod is still charging */
 	if (o_ptr->timeout < cost)
@@ -4335,15 +4323,6 @@ void do_cmd_zap_rod(void)
 	case SV_ROD_DETECTION:
 		{
 			detect_all(DEFAULT_RADIUS);
-
-			ident = TRUE;
-
-			break;
-		}
-
-	case SV_ROD_PROBING:
-		{
-			probing();
 
 			ident = TRUE;
 
@@ -4572,7 +4551,7 @@ static object_filter_t const &item_tester_hook_activate()
 	using namespace object_filter;
 	static auto instance = And(
 		IsKnown(),
-		HasFlag3(TR3_ACTIVATE));
+		HasFlags(TR_ACTIVATE));
 	return instance;
 }
 
@@ -4885,8 +4864,6 @@ void do_cmd_activate(void)
 
 	char ch, spell_choice;
 
-	u32b f1, f2, f3, f4, f5, esp;
-
 	/* Get an item */
 	command_wrk = USE_EQUIP;
 	if (!get_item(&item,
@@ -4902,10 +4879,10 @@ void do_cmd_activate(void)
 	object_type *o_ptr = get_object(item);
 
 	/* Extract object flags */
-	object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
+	auto const flags = object_flags(o_ptr);
 
 	/* Wearable items have to be worn */
-	if (!(f5 & TR5_ACTIVATE_NO_WIELD))
+	if (!(flags & TR_ACTIVATE_NO_WIELD))
 	{
 		if (item < INVEN_WIELD)
 		{
@@ -4948,7 +4925,7 @@ void do_cmd_activate(void)
 	}
 
 	/* Is it simple to use ? */
-	if (f4 & TR4_EASY_USE)
+	if (flags & TR_EASY_USE)
 	{
 		chance *= 10;
 	}
@@ -5224,67 +5201,6 @@ const char *activation_aux(object_type * o_ptr, bool_ doit, int item)
 			fire_bolt(GF_MISSILE, dir, damroll(10, 10));
 
 			o_ptr->timeout = rand_int(20) + 20;
-
-			break;
-		}
-
-	case ACT_NUMENOR:
-		{
-			/* Give full knowledge */
-			/* Hack -- Maximal info */
-			monster_race *r_ptr;
-			cave_type *c_ptr;
-			int x, y, m;
-
-			if (!doit) return "analyze monster every 500+d200 turns";
-
-			if (!tgt_pt(&x, &y)) break;
-
-			c_ptr = &cave[y][x];
-			if (!c_ptr->m_idx) break;
-
-			r_ptr = &r_info[c_ptr->m_idx];
-
-			/* Observe "maximal" attacks */
-			for (m = 0; m < 4; m++)
-			{
-				/* Examine "actual" blows */
-				if (r_ptr->blow[m].effect || r_ptr->blow[m].method)
-				{
-					/* Hack -- maximal observations */
-					r_ptr->r_blows[m] = MAX_UCHAR;
-				}
-			}
-
-			/* Hack -- maximal drops */
-			r_ptr->r_drop_gold = r_ptr->r_drop_item =
-			                             (((r_ptr->flags1 & (RF1_DROP_4D2)) ? 8 : 0) +
-			                              ((r_ptr->flags1 & (RF1_DROP_3D2)) ? 6 : 0) +
-			                              ((r_ptr->flags1 & (RF1_DROP_2D2)) ? 4 : 0) +
-			                              ((r_ptr->flags1 & (RF1_DROP_1D2)) ? 2 : 0) +
-			                              ((r_ptr->flags1 & (RF1_DROP_90)) ? 1 : 0) +
-			                              ((r_ptr->flags1 & (RF1_DROP_60)) ? 1 : 0));
-
-			/* Hack -- but only "valid" drops */
-			if (r_ptr->flags1 & (RF1_ONLY_GOLD)) r_ptr->r_drop_item = 0;
-			if (r_ptr->flags1 & (RF1_ONLY_ITEM)) r_ptr->r_drop_gold = 0;
-
-			/* Hack -- observe many spells */
-			r_ptr->r_cast_inate = MAX_UCHAR;
-			r_ptr->r_cast_spell = MAX_UCHAR;
-
-			/* Hack -- know all the flags */
-			r_ptr->r_flags1 = r_ptr->flags1;
-			r_ptr->r_flags2 = r_ptr->flags2;
-			r_ptr->r_flags3 = r_ptr->flags3;
-			r_ptr->r_flags4 = r_ptr->flags4;
-			r_ptr->r_flags5 = r_ptr->flags5;
-			r_ptr->r_flags6 = r_ptr->flags6;
-			r_ptr->r_flags7 = r_ptr->flags7;
-			r_ptr->r_flags8 = r_ptr->flags8;
-			r_ptr->r_flags9 = r_ptr->flags9;
-
-			o_ptr->timeout = rand_int(200) + 500;
 
 			break;
 		}
@@ -5928,7 +5844,7 @@ const char *activation_aux(object_type * o_ptr, bool_ doit, int item)
 		{
 			if (!doit) return "detect orcs every 10 turns";
 			msg_print("Your weapon glows brightly...");
-			(void)detect_monsters_xxx(RF3_ORC, DEFAULT_RADIUS);
+			detect_monsters_orcs(DEFAULT_RADIUS);
 
 			o_ptr->timeout = 10;
 
@@ -6739,10 +6655,9 @@ const char *activation_aux(object_type * o_ptr, bool_ doit, int item)
 
 	case ACT_DETECT_XTRA:
 		{
-			if (!doit) return "detection, probing and identify true every 1000 turns";
+			if (!doit) return "detection and identify true every 1000 turns";
 			msg_print("It glows brightly...");
 			detect_all(DEFAULT_RADIUS);
-			probing();
 			identify_fully();
 
 			o_ptr->timeout = 1000;

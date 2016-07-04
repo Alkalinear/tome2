@@ -2,12 +2,14 @@
 
 #include "cave_type.hpp"
 #include "dungeon_flag.hpp"
+#include "feature_flag.hpp"
 #include "feature_type.hpp"
 #include "hook_get_in.hpp"
 #include "hooks.hpp"
 #include "lua_bind.hpp"
 #include "object1.hpp"
 #include "object2.hpp"
+#include "object_flag.hpp"
 #include "object_type.hpp"
 #include "player_type.hpp"
 #include "quark.hpp"
@@ -90,7 +92,7 @@ static object_filter_t const &item_tester_hook_proofable()
 			TVal(TV_STAFF)),
 		// Must NOT already be fireproof
 		Not(
-			HasFlag3(TR3_IGNORE_FIRE)));
+			HasFlags(TR_IGNORE_FIRE)));
 	return instance;
 }
 
@@ -530,8 +532,8 @@ static bool_ fireproof_gen_hook(void *, void *, void *)
 				cave_type *c_ptr = &cave[trap_y][trap_x];
 
 				/* are the coordinates on a stair, or a wall? */
-				if (((f_info[c_ptr->feat].flags1 & FF1_PERMANENT) != 0) ||
-				    ((f_info[c_ptr->feat].flags1 & FF1_FLOOR) == 0))
+				if (bool(f_info[c_ptr->feat].flags & FF_PERMANENT) ||
+				    (f_info[c_ptr->feat].flags & FF_FLOOR).empty())
 				{
 					/* try again */
 					tries = 0;

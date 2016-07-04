@@ -251,6 +251,22 @@ static void do_string(char *str, int max, ls_flag_t flag)
 }
 
 /*
+ * Load/save flag set
+ */
+namespace {
+
+template<std::size_t Tiers> void do_flag_set(flag_set<Tiers> *flags, ls_flag_t flag)
+{
+	for (std::size_t i = 0; i < flags->size(); i++)
+	{
+		do_u32b(&(*flags)[i], flag);
+	}
+}
+
+} // namespace (anonymous)
+
+
+/*
  * Load/Save quick start data
  */
 static void do_quick_start(ls_flag_t flag)
@@ -337,17 +353,11 @@ static void do_subrace(ls_flag_t flag)
 	for (i = 0; i < BODY_MAX; i++)
 		do_byte((byte*)&sr_ptr->body_parts[i], flag);
 
-	do_u32b(&sr_ptr->flags1, flag);
-	do_u32b(&sr_ptr->flags2, flag);
+	do_flag_set(&sr_ptr->flags, flag);
 
 	for (i = 0; i < PY_MAX_LEVEL + 1; i++)
 	{
-		do_u32b(&sr_ptr->oflags1[i], flag);
-		do_u32b(&sr_ptr->oflags2[i], flag);
-		do_u32b(&sr_ptr->oflags3[i], flag);
-		do_u32b(&sr_ptr->oflags4[i], flag);
-		do_u32b(&sr_ptr->oflags5[i], flag);
-		do_u32b(&sr_ptr->oesp[i], flag);
+		do_flag_set(&sr_ptr->oflags[i], flag);
 		do_s16b(&sr_ptr->opval[i], flag);
 	}
 
@@ -534,7 +544,6 @@ static bool_ do_extra(ls_flag_t flag)
 			do_s32b(&s_info[i].mod, flag);
 			do_byte((byte*)&s_info[i].dev, flag);
 			do_byte((byte*)&s_info[i].hidden, flag);
-			do_u32b(&s_info[i].uses, flag);
 		}
 		else
 		{
@@ -542,7 +551,6 @@ static bool_ do_extra(ls_flag_t flag)
 			do_s16b(&tmp16s, flag);
 			do_byte(&tmp8u, flag);
 			do_byte(&tmp8u, flag);
-			do_u32b(&tmp32u, flag);
 		}
 	}
 
@@ -1021,18 +1029,11 @@ static bool_ wearable_p(object_type *o_ptr)
 
 /*
  * rd/wr an object
- *
- * FIXME! This code probably has a lot of cruft from the old Z/V codebase.
- *
  */
 static void do_item(object_type *o_ptr, ls_flag_t flag)
 {
 	byte old_dd;
 	byte old_ds;
-
-	u32b f1, f2, f3, f4, f5, esp;
-
-	object_kind *k_ptr;
 
 	/* Kind */
 	do_s16b(&o_ptr->k_idx, flag);
@@ -1086,20 +1087,10 @@ static void do_item(object_type *o_ptr, ls_flag_t flag)
 	do_byte(&o_ptr->marked, flag);
 
 	/* flags */
-	do_u32b(&o_ptr->art_flags1, flag);
-	do_u32b(&o_ptr->art_flags2, flag);
-	do_u32b(&o_ptr->art_flags3, flag);
-	do_u32b(&o_ptr->art_flags4, flag);
-	do_u32b(&o_ptr->art_flags5, flag);
-	do_u32b(&o_ptr->art_esp, flag);
+	do_flag_set(&o_ptr->art_flags, flag);
 
 	/* obvious flags */
-	do_u32b(&o_ptr->art_oflags1, flag);
-	do_u32b(&o_ptr->art_oflags2, flag);
-	do_u32b(&o_ptr->art_oflags3, flag);
-	do_u32b(&o_ptr->art_oflags4, flag);
-	do_u32b(&o_ptr->art_oflags5, flag);
-	do_u32b(&o_ptr->art_oesp, flag);
+	do_flag_set(&o_ptr->art_oflags, flag);
 
 	/* Monster holding object */
 	do_s16b(&o_ptr->held_m_idx, flag);
@@ -1164,7 +1155,7 @@ static void do_item(object_type *o_ptr, ls_flag_t flag)
 	/*********** END OF ls_flag_t::SAVE ***************/
 
 	/* Obtain the "kind" template */
-	k_ptr = &k_info[o_ptr->k_idx];
+	object_kind *k_ptr = &k_info[o_ptr->k_idx];
 
 	/* Obtain tval/sval from k_info */
 	o_ptr->tval = k_ptr->tval;
@@ -1188,9 +1179,6 @@ static void do_item(object_type *o_ptr, ls_flag_t flag)
 		return;
 	}
 
-
-	/* Extract the flags */
-	object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
 
 	/* Paranoia */
 	if (o_ptr->name1)
@@ -1329,10 +1317,7 @@ static bool_ do_dungeon(ls_flag_t flag, bool_ no_companions)
 	do_s16b(&max_panel_rows, flag);
 	do_s16b(&max_panel_cols, flag);
 
-	for (std::size_t i = 0; i < dungeon_flags.size(); i++)
-	{
-		do_u32b(&dungeon_flags[i], flag);
-	}
+	do_flag_set(&dungeon_flags, flag);
 
 	/* Last teleportation */
 	do_s16b(&last_teleportation_y, flag);
@@ -1637,62 +1622,39 @@ bool_ file_exist(cptr buf)
  */
 static void do_lore(int r_idx, ls_flag_t flag)
 {
+	byte tmp_u8 = 0;
+	u32b tmp_u32 = 0;
+	s16b tmp_s16 = 0;
 	monster_race *r_ptr = &r_info[r_idx];
 
-	/* Count sights/deaths/kills */
-	do_s16b(&r_ptr->r_sights, flag);
-	do_s16b(&r_ptr->r_deaths, flag);
+	do_s16b(&tmp_s16, flag);
+	do_s16b(&tmp_s16, flag);
 	do_s16b(&r_ptr->r_pkills, flag);
-	do_s16b(&r_ptr->r_tkills, flag);
+	do_s16b(&tmp_s16, flag);
+	do_byte(&tmp_u8, flag);
+	do_byte(&tmp_u8, flag);
+	do_byte(&tmp_u8, flag);
+	do_byte(&tmp_u8, flag);
+	do_byte(&tmp_u8, flag);
+	do_byte(&tmp_u8, flag);
+	do_byte(&tmp_u8, flag);
+	do_byte(&tmp_u8, flag);
+	do_byte(&tmp_u8, flag);
+	do_byte(&tmp_u8, flag);
+	do_byte(&tmp_u8, flag);
+	do_byte(&tmp_u8, flag);
+	do_u32b(&tmp_u32, flag);
+	do_u32b(&tmp_u32, flag);
+	do_u32b(&tmp_u32, flag);
+	do_u32b(&tmp_u32, flag);
+	do_u32b(&tmp_u32, flag);
+	do_u32b(&tmp_u32, flag);
+	do_u32b(&tmp_u32, flag);
+	do_u32b(&tmp_u32, flag);
+	do_u32b(&tmp_u32, flag);
 
-	/* Count wakes and ignores */
-	do_byte(&r_ptr->r_wake, flag);
-	do_byte(&r_ptr->r_ignore, flag);
-
-	/* Extra stuff */
-	do_byte(&r_ptr->r_xtra1, flag);
-	do_byte(&r_ptr->r_xtra2, flag);
-
-	/* Count drops */
-	do_byte(&r_ptr->r_drop_gold, flag);
-	do_byte(&r_ptr->r_drop_item, flag);
-
-	/* Count spells */
-	do_byte(&r_ptr->r_cast_inate, flag);
-	do_byte(&r_ptr->r_cast_spell, flag);
-
-	/* Count blows of each type */
-	do_byte(&r_ptr->r_blows[0], flag);
-	do_byte(&r_ptr->r_blows[1], flag);
-	do_byte(&r_ptr->r_blows[2], flag);
-	do_byte(&r_ptr->r_blows[3], flag);
-
-	/* Memorize flags */
-	do_u32b(&r_ptr->r_flags1, flag); 	/* Just to remind you */
-	do_u32b(&r_ptr->r_flags2, flag); 	/* flag is unrelated to */
-	do_u32b(&r_ptr->r_flags3, flag); 	/* the other argument */
-	do_u32b(&r_ptr->r_flags4, flag);
-	do_u32b(&r_ptr->r_flags5, flag);
-	do_u32b(&r_ptr->r_flags6, flag);
-	do_u32b(&r_ptr->r_flags7, flag);
-	do_u32b(&r_ptr->r_flags8, flag);
-	do_u32b(&r_ptr->r_flags9, flag);
-
-	/* Read the "Racial" monster tmp16b per level */
 	do_s16b(&r_ptr->max_num, flag);
-
 	do_byte((byte*)&r_ptr->on_saved, flag);
-
-	if (flag == ls_flag_t::LOAD)
-	{
-		/* Lore flag repair? */
-		r_ptr->r_flags1 &= r_ptr->flags1;
-		r_ptr->r_flags2 &= r_ptr->flags2;
-		r_ptr->r_flags3 &= r_ptr->flags3;
-		r_ptr->r_flags4 &= r_ptr->flags4;
-		r_ptr->r_flags5 &= r_ptr->flags5;
-		r_ptr->r_flags6 &= r_ptr->flags6;
-	}
 }
 
 
@@ -1711,7 +1673,10 @@ static void do_store(store_type *str, ls_flag_t flag)
 
 	/* Could be cleaner, done this way for benefit of the for loop later on */
 	byte num;
-	if (flag == ls_flag_t::SAVE) num = str->stock_num;
+	if (flag == ls_flag_t::SAVE)
+	{
+		num = str->stock.size();
+	}
 	do_byte(&num, flag);
 
 	/* Last visit */
@@ -1721,7 +1686,6 @@ static void do_store(store_type *str, ls_flag_t flag)
 	for (int j = 0; j < num; j++)
 	{
 		if (flag == ls_flag_t::LOAD)
-			/* Can't this be cleaner? */
 		{
 			object_type forge;
 			/* Wipe the object */
@@ -1729,15 +1693,17 @@ static void do_store(store_type *str, ls_flag_t flag)
 			/* Read the item */
 			do_item(&forge, ls_flag_t::LOAD);
 			/* Acquire valid items */
-			if ((str->stock_num < store_inven_max) && (str->stock_num < str->stock_size))
+			if ((str->stock.size() < store_inven_max) && (str->stock.size() < str->stock_size))
 			{
-				int k = str->stock_num++;
-
-				/* Acquire the item */
-				object_copy(&str->stock[k], &forge);
+				object_type stock_obj;
+				object_copy(&stock_obj, &forge);
+				str->stock.push_back(stock_obj);
 			}
 		}
-		if (flag == ls_flag_t::SAVE) do_item(&str->stock[j], flag);
+		if (flag == ls_flag_t::SAVE)
+		{
+			do_item(&str->stock[j], flag);
+		}
 	}
 }
 
@@ -1806,7 +1772,6 @@ static void do_options(ls_flag_t flag)
 		cheat_hear = (c & 0x0200) ? TRUE : FALSE;
 		cheat_room = (c & 0x0400) ? TRUE : FALSE;
 		cheat_xtra = (c & 0x0800) ? TRUE : FALSE;
-		cheat_know = (c & 0x1000) ? TRUE : FALSE;
 		cheat_live = (c & 0x2000) ? TRUE : FALSE;
 	}
 	if (flag == ls_flag_t::SAVE)
@@ -1817,7 +1782,6 @@ static void do_options(ls_flag_t flag)
 		if (cheat_hear) c |= 0x0200;
 		if (cheat_room) c |= 0x0400;
 		if (cheat_xtra) c |= 0x0800;
-		if (cheat_know) c |= 0x1000;
 		if (cheat_live) c |= 0x2000;
 		do_u16b(&c, ls_flag_t::SAVE);
 	}
@@ -1951,10 +1915,8 @@ static void do_options(ls_flag_t flag)
 
 
 /*
- * Handle player inventory
- *
- * FIXME! This function probably could be unified better
- * Note that the inventory is "re-sorted" later by "dungeon()".
+ * Handle player inventory. Note that the inventory is
+ * "re-sorted" later by "dungeon()".
  */
 static bool_ do_inventory(ls_flag_t flag)
 {
@@ -2054,7 +2016,7 @@ static bool_ do_inventory(ls_flag_t flag)
 /*
  * Read the saved messages
  */
-static void do_messages(ls_flag_t flag)   /* FIXME! We should be able to unify this better */
+static void do_messages(ls_flag_t flag)
 {
 	int i;
 	char buf[128];
@@ -2273,7 +2235,7 @@ static bool_ do_savefile_aux(ls_flag_t flag)
 		sf_saves++; 				/* Increment the saves ctr */
 	}
 
-	/* Handle version bytes. FIXME! DG wants me to change this all around */
+	/* Handle version bytes */
 	if (flag == ls_flag_t::LOAD)
 	{
 		u32b mt32b;

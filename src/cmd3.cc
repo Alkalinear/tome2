@@ -18,8 +18,10 @@
 #include "hooks.hpp"
 #include "monster1.hpp"
 #include "monster_race.hpp"
+#include "monster_race_flag.hpp"
 #include "object1.hpp"
 #include "object2.hpp"
+#include "object_flag.hpp"
 #include "object_kind.hpp"
 #include "object_type.hpp"
 #include "options.hpp"
@@ -160,28 +162,18 @@ void do_cmd_equip(void)
  */
 static bool item_tester_hook_wear(object_type const *o_ptr)
 {
-	u32b f1, f2, f3, f4, f5, esp;
 	int slot = wield_slot(o_ptr);
 
-
-	/* Extract the flags */
-	object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
-
 	/* Only one ultimate at a time */
-	if (f4 & TR4_ULTIMATE)
+	if (object_flags(o_ptr) & TR_ULTIMATE)
 	{
-		int i;
-
-		for (i = INVEN_WIELD; i < INVEN_TOTAL; i++)
+		for (int i = INVEN_WIELD; i < INVEN_TOTAL; i++)
 		{
 			object_type *q_ptr = &p_ptr->inventory[i];
 
-			/* Extract the flags */
-			object_flags(q_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
-
 			if (!q_ptr->k_idx) continue;
 
-			if (f4 & TR4_ULTIMATE) return (FALSE);
+			if (object_flags(q_ptr) & TR_ULTIMATE) return (FALSE);
 		}
 	}
 
@@ -225,9 +217,6 @@ void do_cmd_wield(void)
 	cptr act;
 
 	char o_name[80];
-
-	u32b f1, f2, f3, f4, f5, esp;
-
 
 	/* Get an item */
 	if (!get_item(&item,
@@ -282,11 +271,11 @@ void do_cmd_wield(void)
 	}
 
 	/* Extract the flags */
-	object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
+	auto const flags = object_flags(o_ptr);
 
 	/* Two handed weapons can't be wielded with a shield */
 	if ((is_slot_ok(slot - INVEN_WIELD + INVEN_ARM)) &&
-	                (f4 & TR4_MUST2H) &&
+			(flags & TR_MUST2H) &&
 	                (p_ptr->inventory[slot - INVEN_WIELD + INVEN_ARM].k_idx != 0))
 	{
 		object_desc(o_name, o_ptr, FALSE, 0);
@@ -299,10 +288,10 @@ void do_cmd_wield(void)
 		i_ptr = &p_ptr->inventory[slot - INVEN_ARM + INVEN_WIELD];
 
 		/* Extract the flags */
-		object_flags(i_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
+		auto const i_flags = object_flags(i_ptr);
 
 		/* Prevent shield from being put on if wielding 2H */
-		if ((f4 & TR4_MUST2H) && (i_ptr->k_idx) &&
+		if ((i_flags & TR_MUST2H) && (i_ptr->k_idx) &&
 		                (p_ptr->body_parts[slot - INVEN_WIELD] == INVEN_ARM))
 		{
 			object_desc(o_name, o_ptr, FALSE, 0);
@@ -311,7 +300,7 @@ void do_cmd_wield(void)
 		}
 
 		if ((p_ptr->body_parts[slot - INVEN_WIELD] == INVEN_ARM) &&
-		                (f4 & TR4_COULD2H))
+		                (i_flags & TR_COULD2H))
 		{
 			if (!get_check("Are you sure you want to restrict your fighting? "))
 			{
@@ -320,13 +309,9 @@ void do_cmd_wield(void)
 		}
 	}
 
-
-	/* Extract the flags */
-	object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
-
 	if ((is_slot_ok(slot - INVEN_WIELD + INVEN_ARM)) &&
 	                (p_ptr->inventory[slot - INVEN_WIELD + INVEN_ARM].k_idx != 0) &&
-	                (f4 & TR4_COULD2H))
+			(flags & TR_COULD2H))
 	{
 		if (!get_check("Are you sure you want to use this weapon with a shield?"))
 		{
@@ -518,8 +503,7 @@ void do_cmd_drop(void)
 
 	/* Get the item */
 	object_type *o_ptr = get_object(item);
-	u32b f1, f2, f3, f4, f5, esp;
-	object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
+	auto const flags = object_flags(o_ptr);
 
 	/* Can we drop */
 	struct hook_drop_in in = { item };
@@ -538,7 +522,7 @@ void do_cmd_drop(void)
 		}
 		else
 		{
-			if (f4 & TR4_CURSE_NO_DROP)
+			if (flags & TR_CURSE_NO_DROP)
 			{
 				/* Oops */
 				msg_print("Hmmm, you seem to be unable to drop it.");
@@ -627,10 +611,8 @@ void do_cmd_destroy(void)
 	/* Take no time, just like the automatizer */
 	energy_use = 0;
 
-	u32b f1, f2, f3, f4, f5, esp;
-	object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
-
-	if ((f4 & TR4_CURSE_NO_DROP) && cursed_p(o_ptr))
+	auto const flags = object_flags(o_ptr);
+	if ((flags & TR_CURSE_NO_DROP) && cursed_p(o_ptr))
 	{
 		/* Oops */
 		msg_print("Hmmm, you seem to be unable to destroy it.");
@@ -690,8 +672,10 @@ void do_cmd_destroy(void)
 	}
 
 	/* Eru wont be happy */
-	if (f3 & TR3_BLESSED)
+	if (flags & TR_BLESSED)
+	{
 		inc_piety(GOD_ERU, -10 * k_info[o_ptr->k_idx].level);
+	}
 
 	/* Eliminate the item */
 	inc_stack_size(item, -amt);
@@ -957,13 +941,8 @@ static void do_cmd_refill_torch(void)
  */
 void do_cmd_refill(void)
 {
-	object_type *o_ptr;
-
-	u32b f1, f2, f3, f4, f5, esp;
-
-
 	/* Get the light */
-	o_ptr = &p_ptr->inventory[INVEN_LITE];
+	auto o_ptr = &p_ptr->inventory[INVEN_LITE];
 
 	/* It is nothing */
 	if (o_ptr->tval != TV_LITE)
@@ -972,9 +951,9 @@ void do_cmd_refill(void)
 		return;
 	}
 
-	object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
+	auto const flags = object_flags(o_ptr);
 
-	if (f4 & TR4_FUEL_LITE)
+	if (flags & TR_FUEL_LITE)
 	{
 		/* It's a torch */
 		if (o_ptr->sval == SV_LITE_TORCH ||
@@ -1279,23 +1258,6 @@ static bool compare_monster_level(int w1, int w2)
 	return compare_monster_experience(w1, w2);
 }
 
-/**
- * Sort by total number of kills
- */
-static bool compare_total_kills(int w1, int w2)
-{
-	/* Extract total kills */
-	s16b z1 = r_info[w1].r_tkills;
-	s16b z2 = r_info[w2].r_tkills;
-
-	/* Compare total kills */
-	if (z1 < z2) return true;
-	if (z1 > z2) return false;
-
-	/* Punt to monster level. */
-	return compare_monster_level(w1, w2);
-}
-
 /*
  * Sort by player kills
  */
@@ -1309,8 +1271,8 @@ static bool compare_player_kills(int w1, int w2)
 	if (z1 < z2) return true;
 	if (z1 > z2) return false;
 
-	/* Punt to total number of kills. */
-	return compare_total_kills(w1, w2);
+	/* Punt to monster level. */
+	return compare_monster_level(w1, w2);
 }
 
 
@@ -1342,7 +1304,7 @@ static void roff_top(int r_idx)
 	Term_gotoxy(0, 0);
 
 	/* A title (use "The" for non-uniques) */
-	if (!(r_ptr->flags1 & (RF1_UNIQUE)))
+	if (!(r_ptr->flags & RF_UNIQUE))
 	{
 		Term_addstr( -1, TERM_WHITE, "The ");
 	}
@@ -1451,14 +1413,11 @@ void do_cmd_query_symbol(void)
 	{
 		monster_race *r_ptr = &r_info[i];
 
-		/* Nothing to recall */
-		if (!cheat_know && !r_ptr->r_sights) continue;
-
 		/* Require non-unique monsters if needed */
-		if (norm && (r_ptr->flags1 & (RF1_UNIQUE))) continue;
+		if (norm && (r_ptr->flags & RF_UNIQUE)) continue;
 
 		/* Require unique monsters if needed */
-		if (uniq && !(r_ptr->flags1 & (RF1_UNIQUE))) continue;
+		if (uniq && !(r_ptr->flags & RF_UNIQUE)) continue;
 
 		/* Require monsters with the name requested if needed */
 		if (name)
@@ -1555,7 +1514,7 @@ void do_cmd_query_symbol(void)
 				Term_save();
 
 				/* Recall on screen */
-				screen_roff(who[i], 0, 0);
+				screen_roff(who[i], 0);
 
 				/* Hack -- Complete the prompt (again) */
 				Term_addstr( -1, TERM_WHITE, " [(r)ecall, ESC]");
@@ -1605,206 +1564,6 @@ void do_cmd_query_symbol(void)
 
 	/* Re-display the identity */
 	prt(buf, 0, 0);
-}
-
-
-/*
- *  research_mon
- *  -KMW-
- */
-bool_ research_mon()
-{
-	int i, r_idx;
-
-	char sym, query;
-
-	char buf[128];
-
-
-	s16b oldkills;
-
-	byte oldwake;
-
-	bool_ oldcheat;
-
-
-	bool_ all = FALSE;
-
-	bool_ uniq = FALSE;
-
-	bool_ norm = FALSE;
-
-	bool_ notpicked;
-
-
-	bool_ recall = FALSE;
-
-	monster_race *r2_ptr;
-
-	/* Hack -- Remember "cheat_know" flag */
-	oldcheat = cheat_know;
-
-
-	/* Get a character, or abort */
-	if (!get_com("Enter character of monster: ", &sym)) return (TRUE);
-
-	/* Find that character info, and describe it */
-	for (i = 0; ident_info[i]; ++i)
-	{
-		if (sym == ident_info[i][0]) break;
-	}
-
-	if (ident_info[i])
-	{
-		strnfmt(buf, 128, "%c - %s.", sym, ident_info[i] + 2);
-	}
-	else
-	{
-		strnfmt(buf, 128, "%c - %s.", sym, "Unknown Symbol");
-	}
-
-	/* Display the result */
-	prt(buf, 16, 10);
-
-
-	/* Collect matching monsters */
-	std::vector<u16b> who;
-	for (i = 1; i < max_r_idx; i++)
-	{
-		monster_race *r_ptr = &r_info[i];
-
-		/* Hack -- Force "cheat_know" */
-		cheat_know = TRUE;
-
-		/* Nothing to recall */
-		if (!cheat_know && !r_ptr->r_sights) continue;
-
-		/* Require non-unique monsters if needed */
-		if (norm && (r_ptr->flags1 & (RF1_UNIQUE))) continue;
-
-		/* Require unique monsters if needed */
-		if (uniq && !(r_ptr->flags1 & (RF1_UNIQUE))) continue;
-
-		/* Collect "appropriate" monsters */
-		if (all || (r_ptr->d_char == sym)) {
-			who.push_back(i);
-		}
-	}
-
-	/* Nothing to recall */
-	if (who.empty())
-	{
-		/* Restore the "cheat_know" flag */
-		cheat_know = oldcheat;
-
-		return (TRUE);
-	}
-
-
-	query = 'y';
-
-	/* Sort by level */
-	std::sort(std::begin(who), std::end(who), compare_monster_level);
-
-
-	/* Start at the end */
-	i = who.size() - 1;
-
-	notpicked = TRUE;
-
-	/* Scan the monster memory */
-	while (notpicked)
-	{
-		/* Extract a race */
-		r_idx = who[i];
-
-		/* Hack -- Auto-recall */
-		monster_race_track(r_idx, 0);
-
-		/* Hack -- Handle stuff */
-		handle_stuff();
-
-		/* Hack -- Begin the prompt */
-		roff_top(r_idx);
-
-		/* Hack -- Complete the prompt */
-		Term_addstr( -1, TERM_WHITE, " [(r)ecall, ESC, space to continue]");
-
-		/* Interact */
-		while (1)
-		{
-			/* Recall */
-			if (recall)
-			{
-				/* Save the screen */
-				character_icky = TRUE;
-				Term_save();
-
-				/* Recall on screen */
-				r2_ptr = &r_info[r_idx];
-
-				oldkills = r2_ptr->r_tkills;
-				oldwake = r2_ptr->r_wake;
-				screen_roff(who[i], 0, 1);
-				r2_ptr->r_tkills = oldkills;
-				r2_ptr->r_wake = oldwake;
-				r2_ptr->r_sights = 1;
-				cheat_know = oldcheat;
-				notpicked = FALSE;
-				break;
-
-			}
-
-			/* Command */
-			query = inkey();
-
-			/* Unrecall */
-			if (recall)
-			{
-				/* Restore */
-				Term_load();
-				character_icky = FALSE;
-			}
-
-			/* Normal commands */
-			if (query != 'r') break;
-
-			/* Toggle recall */
-			recall = !recall;
-		}
-
-		/* Stop scanning */
-		if (query == ESCAPE) break;
-
-		/* Move to "prev" monster */
-		if (query == '-')
-		{
-			i++;
-			assert(i >= 0);
-			if (static_cast<size_t>(i) == who.size())
-			{
-				i = 0;
-			}
-		}
-
-		/* Move to "next" monster */
-		else
-		{
-			if (i-- == 0)
-			{
-				i = who.size() - 1;
-			}
-		}
-	}
-
-
-	/* Re-display the identity */
-	/* prt(buf, 5, 5);*/
-
-	/* Restore the "cheat_know" flag */
-	cheat_know = oldcheat;
-
-	return (notpicked);
 }
 
 

@@ -14,6 +14,7 @@
 #include "cmd1.hpp"
 #include "dungeon_info_type.hpp"
 #include "dungeon_flag.hpp"
+#include "feature_flag.hpp"
 #include "feature_type.hpp"
 #include "files.hpp"
 #include "gods.hpp"
@@ -27,11 +28,14 @@
 #include "monster2.hpp"
 #include "monster3.hpp"
 #include "monster_race.hpp"
+#include "monster_race_flag.hpp"
 #include "monster_type.hpp"
 #include "object1.hpp"
 #include "object2.hpp"
+#include "object_flag.hpp"
 #include "object_kind.hpp"
 #include "options.hpp"
+#include "player_race_flag.hpp"
 #include "player_type.hpp"
 #include "skills.hpp"
 #include "spells1.hpp"
@@ -81,7 +85,7 @@ static bool_ do_cmd_bash_fountain(int y, int x)
 	monster_race *r_ptr = &r_info[p_ptr->body_monster];
 
 
-	if ((p_ptr->body_monster != 0) && !(r_ptr->flags2 & RF2_BASH_DOOR))
+	if ((p_ptr->body_monster != 0) && !(r_ptr->flags & RF_BASH_DOOR))
 	{
 		msg_print("You cannot do that.");
 
@@ -772,7 +776,7 @@ static bool_ do_cmd_open_chest(int y, int x, s16b o_idx)
 	monster_race *r_ptr = &r_info[p_ptr->body_monster];
 
 
-	if ((p_ptr->body_monster != 0) && !(r_ptr->flags2 & RF2_OPEN_DOOR))
+	if ((p_ptr->body_monster != 0) && !(r_ptr->flags & RF_OPEN_DOOR))
 	{
 		msg_print("You cannot open chests.");
 
@@ -1014,7 +1018,7 @@ static bool_ do_cmd_open_aux(int y, int x, int dir)
 	monster_race *r_ptr = &r_info[p_ptr->body_monster];
 
 
-	if ((p_ptr->body_monster != 0) && !(r_ptr->flags2 & RF2_OPEN_DOOR))
+	if ((p_ptr->body_monster != 0) && !(r_ptr->flags & RF_OPEN_DOOR))
 	{
 		msg_print("You cannot open doors.");
 
@@ -1129,7 +1133,7 @@ void do_cmd_open(void)
 	monster_race *r_ptr = &r_info[p_ptr->body_monster];
 
 
-	if ((p_ptr->body_monster != 0) && !(r_ptr->flags2 & RF2_OPEN_DOOR))
+	if ((p_ptr->body_monster != 0) && !(r_ptr->flags & RF_OPEN_DOOR))
 	{
 		msg_print("You cannot open doors.");
 
@@ -1249,7 +1253,7 @@ static bool_ do_cmd_close_aux(int y, int x, int dir)
 	monster_race *r_ptr = &r_info[p_ptr->body_monster];
 
 
-	if ((p_ptr->body_monster != 0) && !(r_ptr->flags2 & RF2_OPEN_DOOR))
+	if ((p_ptr->body_monster != 0) && !(r_ptr->flags & RF_OPEN_DOOR))
 	{
 		msg_print("You cannot close doors.");
 
@@ -1408,7 +1412,7 @@ static bool_ do_cmd_tunnel_test(int y, int x)
 	}
 
 	/* Must be tunnelable */
-	if (!(f_info[cave[y][x].feat].flags1 & FF1_TUNNELABLE))
+	if (!(f_info[cave[y][x].feat].flags & FF_TUNNELABLE))
 	{
 		/* Message */
 		msg_print(f_info[cave[y][x].feat].tunnel);
@@ -1500,7 +1504,7 @@ static bool_ do_cmd_tunnel_aux(int y, int x, int dir)
 	sound(SOUND_DIG);
 
 	/* Titanium */
-	if (f_ptr->flags1 & FF1_PERMANENT)
+	if (f_ptr->flags & FF_PERMANENT)
 	{
 		msg_print(f_ptr->tunnel);
 	}
@@ -1974,7 +1978,7 @@ static bool_ do_cmd_disarm_aux(int y, int x, int dir, int do_pickup)
 		c_ptr->t_idx = 0;
 
 		/* Move the player onto the trap */
-		if (!(f_info[c_ptr->feat].flags1 & FF1_DOOR))
+		if (!(f_info[c_ptr->feat].flags & FF_DOOR))
 			move_player_aux(dir, do_pickup, 0, TRUE);
 
 		/* Remove trap attr from grid */
@@ -2002,7 +2006,7 @@ static bool_ do_cmd_disarm_aux(int y, int x, int dir, int do_pickup)
 		msg_format("You set off the %s!", name);
 
 		/* Move the player onto the trap */
-		if (!(f_info[c_ptr->feat].flags1 & FF1_DOOR))
+		if (!(f_info[c_ptr->feat].flags & FF_DOOR))
 			move_player_aux(dir, do_pickup, 0, FALSE);
 	}
 
@@ -2145,7 +2149,7 @@ static bool_ do_cmd_bash_aux(int y, int x, int dir)
 	monster_race *r_ptr = &r_info[p_ptr->body_monster];
 
 
-	if ((p_ptr->body_monster != 0) && !(r_ptr->flags2 & RF2_BASH_DOOR))
+	if ((p_ptr->body_monster != 0) && !(r_ptr->flags & RF_BASH_DOOR))
 	{
 		msg_print("You cannot do that.");
 
@@ -2259,7 +2263,7 @@ void do_cmd_bash(void)
 	monster_race *r_ptr = &r_info[p_ptr->body_monster];
 
 
-	if ((p_ptr->body_monster != 0) && !(r_ptr->flags2 & RF2_BASH_DOOR))
+	if ((p_ptr->body_monster != 0) && !(r_ptr->flags & RF_BASH_DOOR))
 	{
 		msg_print("You cannot do that.");
 
@@ -2396,7 +2400,7 @@ void do_cmd_alter(void)
 		}
 
 		/* Tunnel through walls */
-		else if (f_info[c_ptr->feat].flags1 & FF1_TUNNELABLE)
+		else if (f_info[c_ptr->feat].flags & FF_TUNNELABLE)
 		{
 			/* Tunnel */
 			more = do_cmd_tunnel_aux(y, x, dir);
@@ -3355,9 +3359,9 @@ void do_cmd_fire(void)
 					cptr note_dies = " dies.";
 
 					/* Some monsters get "destroyed" */
-					if ((r_ptr->flags3 & (RF3_DEMON)) ||
-					                (r_ptr->flags3 & (RF3_UNDEAD)) ||
-					                (r_ptr->flags2 & (RF2_STUPID)) ||
+					if ((r_ptr->flags & RF_DEMON) ||
+					                (r_ptr->flags & RF_UNDEAD) ||
+					                (r_ptr->flags & RF_STUPID) ||
 					                (strchr("Evg", r_ptr->d_char)))
 					{
 						/* Special note at death */
@@ -3593,11 +3597,10 @@ void do_cmd_throw(void)
 	/* Access the item */
 	object_type *o_ptr = get_object(item);
 
-	u32b f1, f2, f3, f4, f5, esp;
-	object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
+	auto const flags = object_flags(o_ptr);
 
 	/* Hack - Cannot throw away 'no drop' cursed items */
-	if (cursed_p(o_ptr) && (f4 & TR4_CURSE_NO_DROP))
+	if (cursed_p(o_ptr) && (flags & TR_CURSE_NO_DROP))
 	{
 		/* Oops */
 		msg_print("Hmmm, you seem to be unable to throw it.");
@@ -3769,9 +3772,9 @@ void do_cmd_throw(void)
 				cptr note_dies = " dies.";
 
 				/* Some monsters get "destroyed" */
-				if ((r_ptr->flags3 & (RF3_DEMON)) ||
-				                (r_ptr->flags3 & (RF3_UNDEAD)) ||
-				                (r_ptr->flags2 & (RF2_STUPID)) ||
+				if ((r_ptr->flags & RF_DEMON) ||
+				                (r_ptr->flags & RF_UNDEAD) ||
+				                (r_ptr->flags & RF_STUPID) ||
 				                (strchr("Evg", r_ptr->d_char)))
 				{
 					/* Special note at death */
@@ -4096,9 +4099,9 @@ void do_cmd_boomerang(void)
 				cptr note_dies = " dies.";
 
 				/* Some monsters get "destroyed" */
-				if ((r_ptr->flags3 & (RF3_DEMON)) ||
-				                (r_ptr->flags3 & (RF3_UNDEAD)) ||
-				                (r_ptr->flags2 & (RF2_STUPID)) ||
+				if ((r_ptr->flags & RF_DEMON) ||
+				                (r_ptr->flags & RF_UNDEAD) ||
+				                (r_ptr->flags & RF_STUPID) ||
 				                (strchr("Evg", r_ptr->d_char)))
 				{
 					/* Special note at death */
@@ -4781,7 +4784,7 @@ void do_cmd_steal()
 	}
 
 	/* The monster is immune */
-	if (r_info[m_ptr->r_idx].flags7 & (RF7_NO_THEFT))
+	if (r_info[m_ptr->r_idx].flags & RF_NO_THEFT)
 	{
 		msg_print("The monster is guarding the treasures.");
 		return;
@@ -4884,7 +4887,7 @@ void do_cmd_steal()
 		m_ptr->hold_o_idxs.erase(m_ptr->hold_o_idxs.begin() + k);
 
 		/* Rogues gain some xp */
-		if (race_flags1_p(PR1_EASE_STEAL))
+		if (race_flags_p(PR_EASE_STEAL))
 		{
 			s32b max_point;
 

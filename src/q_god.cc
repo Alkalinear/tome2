@@ -3,12 +3,15 @@
 #include "cave_type.hpp"
 #include "dungeon_flag.hpp"
 #include "dungeon_info_type.hpp"
+#include "feature_flag.hpp"
 #include "feature_type.hpp"
 #include "hook_chardump_in.hpp"
 #include "hook_get_in.hpp"
 #include "hook_enter_dungeon_in.hpp"
 #include "hook_player_level_in.hpp"
 #include "hooks.hpp"
+#include "monster_race_flag.hpp"
+#include "monster_spell_flag.hpp"
 #include "object2.hpp"
 #include "player_type.hpp"
 #include "quark.hpp"
@@ -374,8 +377,8 @@ static void quest_god_generate_relic()
 		c_ptr = &cave[y][x];
 
 		/* are the coordinates on a floor, not on a permanent feature (eg stairs), and not on a trap ? */
-		if ((f_info[c_ptr->feat].flags1 & FF1_FLOOR) &&
-		    (!(f_info[c_ptr->feat].flags1 & FF1_PERMANENT)) &&
+		if ((f_info[c_ptr->feat].flags & FF_FLOOR) &&
+		    (!(f_info[c_ptr->feat].flags & FF_PERMANENT)) &&
 		    (c_ptr->t_idx == 0))
 		{
 			break;
@@ -468,13 +471,13 @@ static void quest_god_set_god_dungeon_attributes_eru()
 	d_info[DUNGEON_GOD].rules[0].percent = 50;
 
 	/* M: We want evil or flying characters */
-	d_info[DUNGEON_GOD].rules[0].mflags3 = RF3_EVIL;
+	d_info[DUNGEON_GOD].rules[0].mflags = RF_EVIL;
 
 	d_info[DUNGEON_GOD].rules[1].mode = 3;
 	d_info[DUNGEON_GOD].rules[1].percent = 50;
 
 	/* M: We want evil or flying characters */
-	d_info[DUNGEON_GOD].rules[1].mflags7 = RF7_CAN_FLY;
+	d_info[DUNGEON_GOD].rules[1].mflags = RF_CAN_FLY;
 }
 
 static void quest_god_set_god_dungeon_attributes_manwe()
@@ -532,11 +535,11 @@ static void quest_god_set_god_dungeon_attributes_manwe()
 
 	/* M: We want air(poison-type) or flying characters. Orcs
 	 * too. They would have ransacked his elf-loving temple :) */
-	d_info[DUNGEON_GOD].rules[0].mflags2 = RF2_INVISIBLE;
-	d_info[DUNGEON_GOD].rules[1].mflags3 = RF3_ORC | RF3_IM_POIS;
-	d_info[DUNGEON_GOD].rules[2].mflags4 = RF4_BR_POIS | RF4_BR_GRAV;
-	d_info[DUNGEON_GOD].rules[3].mflags5 = RF5_BA_POIS;
-	d_info[DUNGEON_GOD].rules[4].mflags7 = RF7_CAN_FLY;
+	d_info[DUNGEON_GOD].rules[0].mflags = RF_INVISIBLE;
+	d_info[DUNGEON_GOD].rules[1].mflags = RF_ORC | RF_IM_POIS;
+	d_info[DUNGEON_GOD].rules[2].mspells = SF_BR_POIS | SF_BR_GRAV;
+	d_info[DUNGEON_GOD].rules[3].mspells = SF_BA_POIS;
+	d_info[DUNGEON_GOD].rules[4].mflags = RF_CAN_FLY;
 }
 
 static void quest_god_set_god_dungeon_attributes_tulkas()
@@ -581,7 +584,7 @@ static void quest_god_set_god_dungeon_attributes_tulkas()
 	d_info[DUNGEON_GOD].rules[0].percent = 100;
 
 	/* M: plenty demons please */
-	d_info[DUNGEON_GOD].rules[0].mflags3 = RF3_DEMON | RF3_EVIL;
+	d_info[DUNGEON_GOD].rules[0].mflags = RF_DEMON | RF_EVIL;
 }
 
 static void quest_god_set_god_dungeon_attributes_melkor()
@@ -634,7 +637,7 @@ static void quest_god_set_god_dungeon_attributes_melkor()
 	d_info[DUNGEON_GOD].rules[1].percent = 20;
 
 	/* M: */
-	d_info[DUNGEON_GOD].rules[1].mflags3 = RF3_GOOD;
+	d_info[DUNGEON_GOD].rules[1].mflags = RF_GOOD;
 }
 
 static void quest_god_set_god_dungeon_attributes_yavanna()
@@ -684,8 +687,8 @@ static void quest_god_set_god_dungeon_attributes_yavanna()
 	d_info[DUNGEON_GOD].rules[0].percent = 100;
 
 	/* M: */
-	d_info[DUNGEON_GOD].rules[0].mflags3 =
-		RF3_DEMON | RF3_UNDEAD | RF3_NONLIVING;
+	d_info[DUNGEON_GOD].rules[0].mflags =
+		RF_DEMON | RF_UNDEAD | RF_NONLIVING;
 }
 
 static void quest_god_set_god_dungeon_attributes_aule()
@@ -782,11 +785,11 @@ static void quest_god_set_god_dungeon_attributes_varda()
 	d_info[DUNGEON_GOD].rules[4].percent = 20;
 
 	/* M: We want air(poison-type) or flying characters. Orcs too. */
-	d_info[DUNGEON_GOD].rules[0].mflags2 = RF2_INVISIBLE;
-	d_info[DUNGEON_GOD].rules[1].mflags3 = RF3_ORC | RF3_IM_POIS;
-	d_info[DUNGEON_GOD].rules[2].mflags4 = RF4_BR_POIS | RF4_BR_GRAV;
-	d_info[DUNGEON_GOD].rules[3].mflags5 = RF5_BA_POIS;
-	d_info[DUNGEON_GOD].rules[4].mflags7 = RF7_CAN_FLY;
+	d_info[DUNGEON_GOD].rules[0].mflags = RF_INVISIBLE;
+	d_info[DUNGEON_GOD].rules[1].mflags = RF_ORC | RF_IM_POIS;
+	d_info[DUNGEON_GOD].rules[2].mspells = SF_BR_POIS | SF_BR_GRAV;
+	d_info[DUNGEON_GOD].rules[3].mspells = SF_BA_POIS;
+	d_info[DUNGEON_GOD].rules[4].mflags = RF_CAN_FLY;
 }
 
 static void quest_god_set_god_dungeon_attributes_ulmo()
@@ -829,9 +832,9 @@ static void quest_god_set_god_dungeon_attributes_ulmo()
 	d_info[DUNGEON_GOD].rules[2].percent = 30;
 
 	/* M: Aquatic creatures only. */
-	d_info[DUNGEON_GOD].rules[0].mflags3 = RF7_CAN_FLY;
-	d_info[DUNGEON_GOD].rules[1].mflags3 = RF7_AQUATIC;
-	d_info[DUNGEON_GOD].rules[2].mflags3 = RF3_RES_WATE;
+	d_info[DUNGEON_GOD].rules[0].mflags = RF_CAN_FLY;
+	d_info[DUNGEON_GOD].rules[1].mflags = RF_AQUATIC;
+	d_info[DUNGEON_GOD].rules[2].mflags = RF_RES_WATE;
 }
 
 static void quest_god_set_god_dungeon_attributes_mandos()
@@ -875,7 +878,7 @@ static void quest_god_set_god_dungeon_attributes_mandos()
 	d_info[DUNGEON_GOD].rules[0].r_char[2] = '\0';
 	d_info[DUNGEON_GOD].rules[0].r_char[3] = '\0';
 	d_info[DUNGEON_GOD].rules[0].r_char[4] = '\0';
-	d_info[DUNGEON_GOD].rules[0].mflags3 = RF3_UNDEAD | RF3_EVIL;
+	d_info[DUNGEON_GOD].rules[0].mflags = RF_UNDEAD | RF_EVIL;
 }
 
 static bool_ quest_god_level_end_gen_hook(void *, void *, void *)

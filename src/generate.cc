@@ -13,6 +13,7 @@
 #include "cave_type.hpp"
 #include "dungeon_info_type.hpp"
 #include "dungeon_flag.hpp"
+#include "feature_flag.hpp"
 #include "feature_type.hpp"
 #include "hook_build_room1_in.hpp"
 #include "hooks.hpp"
@@ -21,8 +22,11 @@
 #include "loadsave.hpp"
 #include "monster2.hpp"
 #include "monster_race.hpp"
+#include "monster_race_flag.hpp"
+#include "monster_spell_flag.hpp"
 #include "monster_type.hpp"
 #include "object2.hpp"
+#include "object_flag.hpp"
 #include "object_kind.hpp"
 #include "options.hpp"
 #include "player_type.hpp"
@@ -557,8 +561,8 @@ void place_new_way(int *y, int *x)
 		if (c_ptr->info & (CAVE_ICKY)) continue;
 
 		/* Reject permanent features */
-		if ((f_info[c_ptr->feat].flags1 & (FF1_PERMANENT)) &&
-		                (f_info[c_ptr->feat].flags1 & (FF1_FLOOR))) continue;
+		if ((f_info[c_ptr->feat].flags & FF_PERMANENT) &&
+		                (f_info[c_ptr->feat].flags & FF_FLOOR)) continue;
 
 		/* Reject room walls */
 		if ((c_ptr->info & (CAVE_ROOM)) &&
@@ -777,10 +781,10 @@ static int next_to_walls(int y, int x)
 {
 	int	k = 0;
 
-	if (f_info[cave[y + 1][x].feat].flags1 & FF1_WALL) k++;
-	if (f_info[cave[y - 1][x].feat].flags1 & FF1_WALL) k++;
-	if (f_info[cave[y][x + 1].feat].flags1 & FF1_WALL) k++;
-	if (f_info[cave[y][x - 1].feat].flags1 & FF1_WALL) k++;
+	if (f_info[cave[y + 1][x].feat].flags & FF_WALL) k++;
+	if (f_info[cave[y - 1][x].feat].flags & FF_WALL) k++;
+	if (f_info[cave[y][x + 1].feat].flags & FF_WALL) k++;
+	if (f_info[cave[y][x - 1].feat].flags & FF_WALL) k++;
 
 	return (k);
 }
@@ -821,7 +825,7 @@ static void place_fountain(int y, int x)
 		object_kind *k_ptr = &k_info[k];
 
 		if (((k_ptr->tval == TV_POTION) || (k_ptr->tval == TV_POTION2)) &&
-		                (k_ptr->level <= dun_level) && (k_ptr->flags4 & TR4_FOUNTAIN))
+				(k_ptr->level <= dun_level) && (k_ptr->flags & TR_FOUNTAIN))
 		{
 			if (k_ptr->tval == TV_POTION2) svals[maxsval] = k_ptr->sval + SV_POTION_LAST;
 			else svals[maxsval] = k_ptr->sval;
@@ -1531,13 +1535,13 @@ static void build_streamer2(int feat, int killwall)
 				if (c_ptr->info & (CAVE_ICKY)) continue;
 
 				/* Reject permanent features */
-				if ((f_info[c_ptr->feat].flags1 & (FF1_PERMANENT)) &&
-				                (f_info[c_ptr->feat].flags1 & (FF1_FLOOR))) continue;
+				if ((f_info[c_ptr->feat].flags & FF_PERMANENT) &&
+				                (f_info[c_ptr->feat].flags & FF_FLOOR)) continue;
 
 				/* Avoid converting walls when told so */
 				if (killwall == 0)
 				{
-					if (f_info[c_ptr->feat].flags1 & FF1_WALL) continue;
+					if (f_info[c_ptr->feat].flags & FF_WALL) continue;
 				}
 
 				/* Clear mimic feature to avoid nasty consequences */
@@ -1594,7 +1598,7 @@ static void build_streamer2(int feat, int killwall)
 					continue;
 
 				/* Only convert non-permanent features */
-				if (f_info[cave[ty][tx].feat].flags1 & FF1_PERMANENT) continue;
+				if (f_info[cave[ty][tx].feat].flags & FF_PERMANENT) continue;
 
 				/* Clear mimic feature to avoid nasty consequences */
 				cave[ty][tx].mimic = 0;
@@ -1712,7 +1716,7 @@ static bool_ get_is_floor(int x, int y)
 	if (!in_bounds(y, x)) return (FALSE);
 
 	/* Do the real check: */
-	if (f_info[cave[y][x].feat].flags1 & FF1_FLOOR) return (TRUE);
+	if (f_info[cave[y][x].feat].flags & FF_FLOOR) return (TRUE);
 
 	return (FALSE);
 }
@@ -2673,10 +2677,10 @@ static bool_ vault_aux_jelly(int r_idx)
 	monster_race *r_ptr = &r_info[r_idx];
 
 	/* Decline unique monsters */
-	if (r_ptr->flags1 & (RF1_UNIQUE)) return (FALSE);
+	if (r_ptr->flags & RF_UNIQUE) return (FALSE);
 
 	/* Also decline evil jellies (like death molds and shoggoths) */
-	if (r_ptr->flags3 & (RF3_EVIL)) return (FALSE);
+	if (r_ptr->flags & RF_EVIL) return (FALSE);
 
 	/* Require icky thing, jelly, mold, or mushroom */
 	if (!strchr("ijm,", r_ptr->d_char)) return (FALSE);
@@ -2694,10 +2698,10 @@ static bool_ vault_aux_animal(int r_idx)
 	monster_race *r_ptr = &r_info[r_idx];
 
 	/* Decline unique monsters */
-	if (r_ptr->flags1 & (RF1_UNIQUE)) return (FALSE);
+	if (r_ptr->flags & RF_UNIQUE) return (FALSE);
 
 	/* Require "animal" flag */
-	if (!(r_ptr->flags3 & (RF3_ANIMAL))) return (FALSE);
+	if (!(r_ptr->flags & RF_ANIMAL)) return (FALSE);
 
 	/* Okay */
 	return (TRUE);
@@ -2712,10 +2716,10 @@ static bool_ vault_aux_undead(int r_idx)
 	monster_race *r_ptr = &r_info[r_idx];
 
 	/* Decline unique monsters */
-	if (r_ptr->flags1 & (RF1_UNIQUE)) return (FALSE);
+	if (r_ptr->flags & RF_UNIQUE) return (FALSE);
 
 	/* Require Undead */
-	if (!(r_ptr->flags3 & (RF3_UNDEAD))) return (FALSE);
+	if (!(r_ptr->flags & RF_UNDEAD)) return (FALSE);
 
 	/* Okay */
 	return (TRUE);
@@ -2730,7 +2734,7 @@ static bool_ vault_aux_chapel(int r_idx)
 	monster_race *r_ptr = &r_info[r_idx];
 
 	/* Decline unique monsters */
-	if (r_ptr->flags1 & (RF1_UNIQUE)) return (FALSE);
+	if (r_ptr->flags & RF_UNIQUE) return (FALSE);
 
 	/* Require "priest" or Angel */
 	if (!((r_ptr->d_char == 'A') || strstr(r_ptr->name, "riest")))
@@ -2751,7 +2755,7 @@ static bool_ vault_aux_kennel(int r_idx)
 	monster_race *r_ptr = &r_info[r_idx];
 
 	/* Decline unique monsters */
-	if (r_ptr->flags1 & (RF1_UNIQUE)) return (FALSE);
+	if (r_ptr->flags & RF_UNIQUE) return (FALSE);
 
 	/* Require a Zephyr Hound or a dog */
 	return ((r_ptr->d_char == 'Z') || (r_ptr->d_char == 'C'));
@@ -2767,7 +2771,7 @@ static bool_ vault_aux_treasure(int r_idx)
 	monster_race *r_ptr = &r_info[r_idx];
 
 	/* Decline unique monsters */
-	if (r_ptr->flags1 & (RF1_UNIQUE)) return (FALSE);
+	if (r_ptr->flags & RF_UNIQUE) return (FALSE);
 
 	/* Require "priest" or Angel */
 	if (!((r_ptr->d_char == '!') || (r_ptr->d_char == '|') ||
@@ -2797,7 +2801,7 @@ static bool_ vault_aux_clone(int r_idx)
 static bool_ vault_aux_symbol(int r_idx)
 {
 	return ((r_info[r_idx].d_char == (r_info[template_race].d_char))
-	        && !(r_info[r_idx].flags1 & RF1_UNIQUE));
+		&& !(r_info[r_idx].flags & RF_UNIQUE));
 }
 
 
@@ -2809,7 +2813,7 @@ static bool_ vault_aux_orc(int r_idx)
 	monster_race *r_ptr = &r_info[r_idx];
 
 	/* Decline unique monsters */
-	if (r_ptr->flags1 & (RF1_UNIQUE)) return (FALSE);
+	if (r_ptr->flags & RF_UNIQUE) return (FALSE);
 
 	/* Hack -- Require "o" monsters */
 	if (!strchr("o", r_ptr->d_char)) return (FALSE);
@@ -2828,7 +2832,7 @@ static bool_ vault_aux_troll(int r_idx)
 	monster_race *r_ptr = &r_info[r_idx];
 
 	/* Decline unique monsters */
-	if (r_ptr->flags1 & (RF1_UNIQUE)) return (FALSE);
+	if (r_ptr->flags & RF_UNIQUE) return (FALSE);
 
 	/* Hack -- Require "T" monsters */
 	if (!strchr("T", r_ptr->d_char)) return (FALSE);
@@ -2846,37 +2850,10 @@ static bool_ vault_aux_giant(int r_idx)
 	monster_race *r_ptr = &r_info[r_idx];
 
 	/* Decline unique monsters */
-	if (r_ptr->flags1 & (RF1_UNIQUE)) return (FALSE);
+	if (r_ptr->flags & RF_UNIQUE) return (FALSE);
 
 	/* Hack -- Require "P" monsters */
 	if (!strchr("P", r_ptr->d_char)) return (FALSE);
-
-	/* Okay */
-	return (TRUE);
-}
-
-
-/*
- * Hack -- breath type for "vault_aux_dragon()"
- */
-static u32b vault_aux_dragon_mask4;
-
-
-/*
- * Helper function for "monster pit (dragon)"
- */
-static bool_ vault_aux_dragon(int r_idx)
-{
-	monster_race *r_ptr = &r_info[r_idx];
-
-	/* Decline unique monsters */
-	if (r_ptr->flags1 & (RF1_UNIQUE)) return (FALSE);
-
-	/* Hack -- Require "d" or "D" monsters */
-	if (!strchr("Dd", r_ptr->d_char)) return (FALSE);
-
-	/* Hack -- Require correct "breath attack" */
-	if (r_ptr->flags4 != vault_aux_dragon_mask4) return (FALSE);
 
 	/* Okay */
 	return (TRUE);
@@ -2891,7 +2868,7 @@ static bool_ vault_aux_demon(int r_idx)
 	monster_race *r_ptr = &r_info[r_idx];
 
 	/* Decline unique monsters */
-	if (r_ptr->flags1 & (RF1_UNIQUE)) return (FALSE);
+	if (r_ptr->flags & RF_UNIQUE) return (FALSE);
 
 	/* Hack -- Require "U" monsters */
 	if (!strchr("U", r_ptr->d_char)) return (FALSE);
@@ -2994,7 +2971,7 @@ static void build_type5(int by0, int bx0)
 			template_race = randint(max_r_idx - 2);
 
 			/* Reject uniques */
-			if (r_info[template_race].flags1 & RF1_UNIQUE) continue;
+			if (r_info[template_race].flags & RF_UNIQUE) continue;
 
 			/* Reject OoD monsters in a loose fashion */
 			if (((r_info[template_race].level) + randint(5)) >
@@ -3265,7 +3242,7 @@ static void build_type6(int by0, int bx0)
 			{
 				template_race = randint(max_r_idx - 2);
 			}
-			while ((r_info[template_race].flags1 & RF1_UNIQUE)
+			while ((r_info[template_race].flags & RF_UNIQUE)
 			                || (((r_info[template_race].level) + randint(5)) >
 			                    (dun_level + randint(5))));
 
@@ -3283,93 +3260,71 @@ static void build_type6(int by0, int bx0)
 	/* Dragon pit */
 	else if (tmp < 80)
 	{
+		/* Hack - get_mon_num_hook needs a plain function */
+		static monster_spell_flag_set mask;
+
 		/* Pick dragon type */
 		switch (rand_int(6))
 		{
-			/* Black */
 		case 0:
 			{
-				/* Message */
 				name = "acid dragon";
-
-				/* Restrict dragon breath type */
-				vault_aux_dragon_mask4 = RF4_BR_ACID;
-
-				/* Done */
+				mask = SF_BR_ACID;
 				break;
 			}
-
-			/* Blue */
 		case 1:
 			{
-				/* Message */
 				name = "electric dragon";
-
-				/* Restrict dragon breath type */
-				vault_aux_dragon_mask4 = RF4_BR_ELEC;
-
-				/* Done */
+				mask = SF_BR_ELEC;
 				break;
 			}
 
-			/* Red */
 		case 2:
 			{
-				/* Message */
 				name = "fire dragon";
-
-				/* Restrict dragon breath type */
-				vault_aux_dragon_mask4 = RF4_BR_FIRE;
-
-				/* Done */
+				mask = SF_BR_FIRE;
 				break;
 			}
 
-			/* White */
 		case 3:
 			{
-				/* Message */
 				name = "cold dragon";
-
-				/* Restrict dragon breath type */
-				vault_aux_dragon_mask4 = RF4_BR_COLD;
-
-				/* Done */
+				mask = SF_BR_COLD;
 				break;
 			}
 
-			/* Green */
 		case 4:
 			{
-				/* Message */
 				name = "poison dragon";
-
-				/* Restrict dragon breath type */
-				vault_aux_dragon_mask4 = RF4_BR_POIS;
-
-				/* Done */
+				mask = SF_BR_POIS;
 				break;
 			}
 
-			/* Multi-hued */
 		default:
 			{
-				/* Message */
 				name = "multi-hued dragon";
-
-				/* Restrict dragon breath type */
-				vault_aux_dragon_mask4 = (RF4_BR_ACID | RF4_BR_ELEC |
-				                          RF4_BR_FIRE | RF4_BR_COLD |
-				                          RF4_BR_POIS);
-
-				/* Done */
+				mask = SF_BR_ACID | SF_BR_ELEC | SF_BR_FIRE | SF_BR_COLD | SF_BR_POIS;
 				break;
 			}
 
 		}
 
 		/* Restrict monster selection */
-		get_mon_num_hook = vault_aux_dragon;
+		get_mon_num_hook = [](int r_idx) -> bool_ {
+			monster_race *r_ptr = &r_info[r_idx];
+
+			/* Decline unique monsters */
+			if (r_ptr->flags & RF_UNIQUE) return (FALSE);
+
+			/* Hack -- Require "d" or "D" monsters */
+			if (!strchr("Dd", r_ptr->d_char)) return (FALSE);
+
+			/* Hack -- Require correct "breath attack" */
+			if ((r_ptr->spells & mask) != mask) return (FALSE);
+
+			/* Okay */
+			return (TRUE);
+		};
 	}
 
 	/* Demon pit */
@@ -4456,7 +4411,7 @@ bool_ generate_fracave(int y0, int x0, int xsize, int ysize,
 			c_ptr = &cave[y + y0 - yhsize][x + x0 - xhsize];
 
 			/* A floor grid to be converted */
-			if ((f_info[c_ptr->feat].flags1 & FF1_FLOOR) &&
+			if ((f_info[c_ptr->feat].flags & FF_FLOOR) &&
 			                (c_ptr->info & CAVE_ICKY))
 
 			{
@@ -6432,15 +6387,15 @@ static bool_ possible_doorway(int y, int x)
 	if (next_to_corr(y, x) >= 2)
 	{
 		/* Check Vertical */
-		if ((f_info[cave[y - 1][x].feat].flags1 & FF1_WALL) &&
-		                (f_info[cave[y + 1][x].feat].flags1 & FF1_WALL))
+		if ((f_info[cave[y - 1][x].feat].flags & FF_WALL) &&
+		                (f_info[cave[y + 1][x].feat].flags & FF_WALL))
 		{
 			return (TRUE);
 		}
 
 		/* Check Horizontal */
-		if ((f_info[cave[y][x - 1].feat].flags1 & FF1_WALL) &&
-		                (f_info[cave[y][x + 1].feat].flags1 & FF1_WALL))
+		if ((f_info[cave[y][x - 1].feat].flags & FF_WALL) &&
+		                (f_info[cave[y][x + 1].feat].flags & FF_WALL))
 		{
 			return (TRUE);
 		}
@@ -6483,7 +6438,7 @@ static void try_doors(int y, int x)
 		if (!in_bounds(yy, xx)) continue;
 
 		/* Ignore walls */
-		if (f_info[cave[yy][xx].feat].flags1 & (FF1_WALL)) continue;
+		if (f_info[cave[yy][xx].feat].flags & FF_WALL) continue;
 
 		/* Ignore room grids */
 		if (cave[yy][xx].info & (CAVE_ROOM)) continue;
@@ -7868,7 +7823,7 @@ static bool_ cave_gen(void)
 			}
 		case FATE_FIND_R:
 			{
-				if ((r_info[fates[i].r_idx].cur_num == 1) && (r_info[fates[i].r_idx].flags1 & RF1_UNIQUE)) fates[i].icky = TRUE;
+				if ((r_info[fates[i].r_idx].cur_num == 1) && (r_info[fates[i].r_idx].flags & RF_UNIQUE)) fates[i].icky = TRUE;
 				break;
 			}
 		}

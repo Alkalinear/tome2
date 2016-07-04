@@ -383,44 +383,6 @@
 #define MAX_STACK_SIZE                  100
 
 
-/* Race flags */
-#define PR1_EXPERIMENTAL        0x00000001L     /* Is still under developemnt */
-/* XXX */
-#define PR1_RESIST_BLACK_BREATH 0x00000004L     /* Resist black breath */
-#define PR1_NO_STUN             0x00000008L     /* Never stunned */
-#define PR1_XTRA_MIGHT_BOW      0x00000010L     /* Xtra might with bows */
-#define PR1_XTRA_MIGHT_XBOW     0x00000020L     /* Xtra might with xbows */
-#define PR1_XTRA_MIGHT_SLING    0x00000040L     /* Xtra might with slings */
-#define PR1_AC_LEVEL            0x00000080L     /* More AC with levels */
-#define PR1_HURT_LITE           0x00000100L     /* Hurt by light */
-#define PR1_VAMPIRE             0x00000200L     /* Vampire */
-#define PR1_UNDEAD              0x00000400L     /* Undead */
-#define PR1_NO_CUT              0x00000800L     /* no cuts */
-#define PR1_CORRUPT             0x00001000L     /* hack-- corrupted */
-#define PR1_NO_FOOD             0x00002000L     /* little gain from food */
-#define PR1_NO_GOD              0x00004000L     /* cannot worship */
-/* XXX */
-#define PR1_ELF                 0x00010000L     /* Is an elf */
-#define PR1_SEMI_WRAITH         0x00020000L     /* Takes damage when going in walls */
-#define PR1_NO_SUBRACE_CHANGE   0x00040000L     /* Impossible to change subrace */
-/* XXX */
-#define PR1_ANTIMAGIC           0x00100000L     /* antimagic ... hack */
-#define PR1_MOLD_FRIEND         0x00200000L     /* Not attacked by molds wielded */
-#define PR1_GOD_FRIEND          0x00400000L     /* Better grace */
-/* XXX */
-#define PR1_INNATE_SPELLS       0x01000000L     /* KNown all spells, only need books */
-/* XXX */
-/* XXX */
-#define PR1_EASE_STEAL          0x08000000L     /* Gain xp by stealing */
-/* XXX */
-/* XXX */
-/* XXX */
-/* XXX */
-
-/* XXX */
-#define PR2_ASTRAL              0x00000002L     /* Is it an astral being coming from th halls of mandos ? */
-/* XXX */
-
 /* XXX */
 #define MKEY_MINDCRAFT          2
 #define MKEY_ANTIMAGIC          3
@@ -788,7 +750,6 @@
 #define ACT_FUNDIN              30
 #define ACT_EOL                 31
 #define ACT_UMBAR               32
-#define ACT_NUMENOR             33
 #define ACT_KNOWLEDGE           34
 #define ACT_UNDEATH             35
 #define ACT_THRAIN              36
@@ -834,10 +795,6 @@
 #define ACT_GANDALF             76
 #define ACT_MARDA               77
 #define ACT_PALANTIR            78
-/*
-                                79
-                                80
-*/
 #define ACT_CURE_LW             81
 #define ACT_CURE_MW             82
 #define ACT_CURE_POISON         83
@@ -845,9 +802,6 @@
 #define ACT_REST_ALL            85
 #define ACT_CURE_700            86
 #define ACT_CURE_1000           87
-/*
-                                88
-*/
 #define ACT_EREBOR              89
 #define ACT_DRUEDAIN            90
 #define ACT_ESP                 91
@@ -1428,12 +1382,10 @@
 #define SV_ROD_ILLUMINATION              4
 #define SV_ROD_MAPPING                   5
 #define SV_ROD_DETECTION                 6
-#define SV_ROD_PROBING                   7
 #define SV_ROD_CURING                    8
 #define SV_ROD_HEALING                   9
 #define SV_ROD_RESTORATION              10
 #define SV_ROD_SPEED                    11
-/* xxx (aimed) */
 #define SV_ROD_TELEPORT_AWAY            13
 #define SV_ROD_DISARMING                14
 #define SV_ROD_LITE                     15
@@ -2280,283 +2232,7 @@
         MFLAG_PARTIAL | MFLAG_CONTROL | MFLAG_NO_DROP \
         )
 
-
-/*
- * As of 2.7.8, the "object flags" are valid for all objects, and as
- * of 2.7.9, these flags are not actually stored with the object.
- *
- * Note that "flags1" contains all flags dependant on "pval" (including
- * stat bonuses, but NOT stat sustainers), plus all "extra attack damage"
- * flags (SLAY_XXX and BRAND_XXX).
- *
- * Note that "flags2" contains all "resistances" (including "Stat Sustainers",
- * actual immunities, and resistances).  Note that "Hold Life" is really an
- * "immunity" to ExpLoss, and "Free Action" is "immunity to paralysis".
- *
- * Note that "flags3" contains everything else -- including the three "CURSED"
- * flags, and the "BLESSED" flag, several "item display" parameters, some new
- * flags for powerful Bows, and flags which affect the player in a "general"
- * way (LITE, TELEPATHY, SEE_INVIS, SLOW_DIGEST, REGEN, FEATHER), including
- * all the "general" curses (TELEPORT, AGGRAVATE, EXP_DRAIN).  It also has
- * four new flags called "ITEM_IGNORE_XXX" which lets an item specify that
- * it can not be affected by various forms of destruction.  This is NOT as
- * powerful as actually granting resistance/immunity to the wearer.
- */
-
-#define TR1_STR                         0x00000001L     /* STR += "pval" */
-#define TR1_INT                         0x00000002L     /* INT += "pval" */
-#define TR1_WIS                         0x00000004L     /* WIS += "pval" */
-#define TR1_DEX                         0x00000008L     /* DEX += "pval" */
-#define TR1_CON                         0x00000010L     /* CON += "pval" */
-#define TR1_CHR                         0x00000020L     /* CHR += "pval" */
-#define TR1_MANA                        0x00000040L     /* Mana multipler */
-#define TR1_SPELL                       0x00000080L     /* Spell power increase */
-#define TR1_STEALTH                     0x00000100L     /* Stealth += "pval" */
-#define TR1_SEARCH                      0x00000200L     /* Search += "pval" */
-#define TR1_INFRA                       0x00000400L     /* Infra += "pval" */
-#define TR1_TUNNEL                      0x00000800L     /* Tunnel += "pval" */
-#define TR1_SPEED                       0x00001000L     /* Speed += "pval" */
-#define TR1_BLOWS                       0x00002000L     /* Blows += "pval" */
-#define TR1_CHAOTIC                     0x00004000L
-#define TR1_VAMPIRIC                    0x00008000L
-#define TR1_SLAY_ANIMAL         0x00010000L
-#define TR1_SLAY_EVIL           0x00020000L
-#define TR1_SLAY_UNDEAD         0x00040000L
-#define TR1_SLAY_DEMON          0x00080000L
-#define TR1_SLAY_ORC            0x00100000L
-#define TR1_SLAY_TROLL          0x00200000L
-#define TR1_SLAY_GIANT          0x00400000L
-#define TR1_SLAY_DRAGON         0x00800000L
-#define TR1_KILL_DRAGON         0x01000000L     /* Execute Dragon */
-#define TR1_VORPAL                      0x02000000L     /* Later */
-#define TR1_IMPACT                      0x04000000L     /* Cause Earthquakes */
-#define TR1_BRAND_POIS                  0x08000000L
-#define TR1_BRAND_ACID          0x10000000L
-#define TR1_BRAND_ELEC          0x20000000L
-#define TR1_BRAND_FIRE          0x40000000L
-#define TR1_BRAND_COLD          0x80000000L
-#define TR1_NULL_MASK           0x00000000L
-
-#define TRAP2_AUTOMATIC_5       0x00000001L     /* Trap automatically rearms itself, 1 in 5 failure */
-#define TRAP2_AUTOMATIC_99      0x00000002L     /* Trap automatically rearms itself */
-#define TRAP2_KILL_GHOST        0x00000004L     /* Trap also affects PASS_WALL creatures */
-#define TRAP2_TELEPORT_TO       0x00000008L     /* After everything else, teleport to player */
-#define TRAP2_ONLY_DRAGON       0x00000010L     /* Affect only dragons & other AFFECTed creatures */
-#define TRAP2_ONLY_DEMON        0x00000020L     /* Affect only demons & other AFFECTed creatures */
-#define TRAP2_ONLY_ANIMAL       0x00000100L     /* Affect only animals & other AFFECTed creatures */
-#define TRAP2_ONLY_UNDEAD       0x00000200L     /* Affect only undead & others */
-#define TRAP2_ONLY_EVIL         0x00000400L     /* Affect only evil creatures &c. */
-
-#define TRAP2_ONLY_MASK		(TRAP2_ONLY_DRAGON | TRAP2_ONLY_DEMON | TRAP2_ONLY_ANIMAL | \
-				 TRAP2_ONLY_UNDEAD | TRAP2_ONLY_EVIL )
-
-#define TR2_SUST_STR            0x00000001L
-#define TR2_SUST_INT            0x00000002L
-#define TR2_SUST_WIS            0x00000004L
-#define TR2_SUST_DEX            0x00000008L
-#define TR2_SUST_CON            0x00000010L
-#define TR2_SUST_CHR            0x00000020L
-#define TR2_INVIS                       0x00000040L     /* Invisibility */
-#define TR2_LIFE                        0x00000080L     /* Life multiplier */
-#define TR2_IM_ACID                     0x00000100L
-#define TR2_IM_ELEC                     0x00000200L
-#define TR2_IM_FIRE                     0x00000400L
-#define TR2_IM_COLD                     0x00000800L
-#define TR2_SENS_FIRE                   0x00001000L     /* Sensibility to fire */
-#define TR2_REFLECT                     0x00002000L     /* Reflect 'bolts' */
-#define TR2_FREE_ACT            0x00004000L     /* Free Action */
-#define TR2_HOLD_LIFE           0x00008000L     /* Hold Life */
-#define TR2_RES_ACID            0x00010000L
-#define TR2_RES_ELEC            0x00020000L
-#define TR2_RES_FIRE            0x00040000L
-#define TR2_RES_COLD            0x00080000L
-#define TR2_RES_POIS            0x00100000L
-#define TR2_RES_FEAR            0x00200000L
-#define TR2_RES_LITE            0x00400000L
-#define TR2_RES_DARK            0x00800000L
-#define TR2_RES_BLIND           0x01000000L
-#define TR2_RES_CONF            0x02000000L
-#define TR2_RES_SOUND           0x04000000L
-#define TR2_RES_SHARDS          0x08000000L
-#define TR2_RES_NETHER          0x10000000L
-#define TR2_RES_NEXUS           0x20000000L
-#define TR2_RES_CHAOS           0x40000000L
-#define TR2_RES_DISEN           0x80000000L
-#define TR2_NULL_MASK           0x00000000L
-
-#define TR3_SH_FIRE             0x00000001L     /* Immolation (Fire) */
-#define TR3_SH_ELEC             0x00000002L     /* Electric Sheath */
-#define TR3_AUTO_CURSE          0x00000004L     /* The obj will recurse itself */
-#define TR3_DECAY               0x00000008L     /* Decay */
-#define TR3_NO_TELE             0x00000010L     /* Anti-teleportation */
-#define TR3_NO_MAGIC            0x00000020L     /* Anti-magic */
-#define TR3_WRAITH              0x00000040L     /* Wraithform */
-#define TR3_TY_CURSE            0x00000080L     /* The Ancient Curse */
-#define TR3_EASY_KNOW           0x00000100L     /* Aware -> Known */
-#define TR3_HIDE_TYPE           0x00000200L     /* Hide "pval" description */
-#define TR3_SHOW_MODS           0x00000400L     /* Always show Tohit/Todam */
-#define TR3_INSTA_ART           0x00000800L     /* Item must be an artifact */
-#define TR3_FEATHER                     0x00001000L     /* Feather Falling */
-#define TR3_LITE1               0x00002000L     /* lite radius 1 */
-#define TR3_SEE_INVIS           0x00004000L     /* See Invisible */
-#define TR3_NORM_ART            0x00008000L     /* Artifact in k_info */
-#define TR3_SLOW_DIGEST         0x00010000L     /* Item slows down digestion */
-#define TR3_REGEN                       0x00020000L     /* Item induces regeneration */
-#define TR3_XTRA_MIGHT          0x00040000L     /* Bows get extra multiplier */
-#define TR3_XTRA_SHOTS          0x00080000L     /* Bows get extra shots */
-#define TR3_IGNORE_ACID         0x00100000L     /* Item ignores Acid Damage */
-#define TR3_IGNORE_ELEC         0x00200000L     /* Item ignores Elec Damage */
-#define TR3_IGNORE_FIRE         0x00400000L     /* Item ignores Fire Damage */
-#define TR3_IGNORE_COLD         0x00800000L     /* Item ignores Cold Damage */
-#define TR3_ACTIVATE            0x01000000L     /* Item can be activated */
-#define TR3_DRAIN_EXP           0x02000000L     /* Item drains Experience */
-#define TR3_TELEPORT            0x04000000L     /* Item teleports player */
-#define TR3_AGGRAVATE           0x08000000L     /* Item aggravates monsters */
-#define TR3_BLESSED                     0x10000000L     /* Item is Blessed */
-#define TR3_CURSED                      0x20000000L     /* Item is Cursed */
-#define TR3_HEAVY_CURSE         0x40000000L     /* Item is Heavily Cursed */
-#define TR3_PERMA_CURSE         0x80000000L     /* Item is Perma Cursed */
-#define TR3_NULL_MASK           0x00000000L
-
-
-#define TR4_NEVER_BLOW          0x00000001L     /* Weapon can't attack */
-#define TR4_PRECOGNITION        0x00000002L     /* Like activating the cheat mode */
-#define TR4_BLACK_BREATH        0x00000004L     /* Tolkien's Black Breath */
-#define TR4_RECHARGE            0x00000008L     /* For artifact Wands and Staffs */
-#define TR4_FLY                 0x00000010L     /* This one and ONLY this one allow you to fly over trees */
-#define TR4_DG_CURSE            0x00000020L     /* The Ancient Morgothian Curse */
-#define TR4_COULD2H             0x00000040L     /* Can wield it 2 Handed */
-#define TR4_MUST2H              0x00000080L     /* Must wield it 2 Handed */
-#define TR4_LEVELS              0x00000100L     /* Can gain exp/exp levels !! */
-#define TR4_CLONE               0x00000200L     /* Can clone monsters */
-#define TR4_SPECIAL_GENE        0x00000400L     /* The object can only be generated in special conditions like quests, special dungeons, ... */
-#define TR4_CLIMB               0x00000800L     /* Allow climbing mountains */
-#define TR4_FAST_CAST           0x00001000L     /* Rod is x2 time faster to use */
-#define TR4_CAPACITY            0x00002000L     /* Rod can take x2 mana */
-#define TR4_CHARGING            0x00004000L     /* Rod recharge faster */
-#define TR4_CHEAPNESS           0x00008000L     /* Rod spells are cheaper(in mana cost) to cast */
-#define TR4_FOUNTAIN            0x00010000L     /* Available as fountain (for potions) */
-#define TR4_ANTIMAGIC_50        0x00020000L     /* Forbid magic */
-#define TR4_EASY_USE            0x00200000L     /* Easily activable */
-#define TR4_IM_NETHER           0x00400000L     /* Immunity to nether */
-#define TR4_RECHARGED           0x00800000L     /* Object has been recharged once */
-#define TR4_ULTIMATE            0x01000000L     /* ULTIMATE artifact */
-#define TR4_AUTO_ID             0x02000000L     /* Id stuff on floor */
-#define TR4_LITE2               0x04000000L     /* lite radius 2 */
-#define TR4_LITE3               0x08000000L     /* lite radius 3 */
-#define TR4_FUEL_LITE           0x10000000L     /* fuelable lite */
-#define TR4_CURSE_NO_DROP       0x40000000L     /* The obj wont be dropped */
-#define TR4_NO_RECHARGE         0x80000000L     /* Object Cannot be recharged */
-#define TR4_NULL_MASK           0xFFFFFFFCL
-
-#define TR5_TEMPORARY           0x00000001L     /* In timeout turns it is destroyed */
-#define TR5_DRAIN_MANA          0x00000002L     /* Drains mana */
-#define TR5_DRAIN_HP            0x00000004L     /* Drains hp */
-#define TR5_KILL_DEMON          0x00000008L     /* Execute Demon */
-#define TR5_KILL_UNDEAD         0x00000010L     /* Execute Undead */
-#define TR5_CRIT                0x00000020L     /* More critical hits */
-#define TR5_ATTR_MULTI          0x00000040L     /* Object shimmer -- only allowed in k_info */
-#define TR5_WOUNDING            0x00000080L     /* Wounds monsters */
-#define TR5_FULL_NAME           0x00000100L     /* Uses direct name from k_info */
-#define TR5_LUCK                0x00000200L     /* Luck += pval */
-#define TR5_IMMOVABLE           0x00000400L     /* Cannot move */
-#define TR5_SPELL_CONTAIN       0x00000800L     /* Can contain a spell */
-#define TR5_RES_MORGUL          0x00001000L     /* Is not shattered by morgul fiends(nazguls) */
-#define TR5_ACTIVATE_NO_WIELD   0x00002000L     /* Can be 'A'ctivated without being wielded */
-#define TR5_MAGIC_BREATH        0x00004000L     /* Can breath anywere */
-#define TR5_WATER_BREATH        0x00008000L     /* Can breath underwater */
-#define TR5_WIELD_CAST          0x00010000L     /* Must be wielded to cast spell from it */
-#define TR5_RANDOM_RESIST       0x00020000L     /* Grants random resistance */
-#define TR5_RANDOM_POWER        0x00040000L     /* Grants random power */
-#define TR5_RANDOM_RES_OR_POWER 0x00080000L     /* Grants random resistance OR power (50-50 chance) */
-
-/* ESP defines */
-#define ESP_ORC                 0x00000001L
-#define ESP_TROLL               0x00000002L
-#define ESP_DRAGON              0x00000004L
-#define ESP_GIANT               0x00000008L
-#define ESP_DEMON               0x00000010L
-#define ESP_UNDEAD              0x00000020L
-#define ESP_EVIL                0x00000040L
-#define ESP_ANIMAL              0x00000080L
-#define ESP_THUNDERLORD         0x00000100L
-#define ESP_GOOD                0x00000200L
-#define ESP_NONLIVING           0x00000400L
-#define ESP_UNIQUE              0x00000800L
-#define ESP_SPIDER              0x00001000L
-#define ESP_ALL                 0x80000000L
-
-/* Number of group of flags to choose from */
-#define MAX_FLAG_GROUP          12
 #define NEW_GROUP_CHANCE        40      /* Chance to get a new group */
-
-/*
- * Hack masks for "pval-dependant" flags.
- */
-#define TR1_PVAL_MASK   \
-	(TR1_STR | TR1_INT | TR1_WIS | TR1_DEX | \
-     TR1_CON | TR1_CHR | \
-	 TR1_STEALTH | TR1_SEARCH | TR1_INFRA | TR1_TUNNEL | \
-     TR1_SPEED | TR1_BLOWS | TR1_SPELL)
-
-#define TR5_PVAL_MASK   \
-	(TR5_CRIT | TR5_LUCK)
-
-
-/*** Ego flags ***/
-#define ETR4_SUSTAIN           0x00000001L     /* Ego-Item gives a Random Sustain */
-#define ETR4_OLD_RESIST        0x00000002L     /* The old "extra power" random high resist */
-#define ETR4_ABILITY           0x00000004L     /* Ego-Item has a random Sustain */
-#define ETR4_R_ELEM            0x00000008L     /* Item resists Acid/Fire/Cold/Elec or Poison */
-#define ETR4_R_LOW             0x00000010L     /* Item has a random low resist */
-#define ETR4_R_HIGH            0x00000020L     /* Item has a random high resist */
-#define ETR4_R_ANY             0x00000040L     /* Item has one additional resist */
-#define ETR4_R_DRAGON          0x00000080L     /* Item gets "Dragon" Resist */
-#define ETR4_SLAY_WEAP         0x00000100L     /* Special 'Slaying' bonus */
-#define ETR4_DAM_DIE           0x00000200L     /* Item has an additional dam die */
-#define ETR4_DAM_SIZE          0x00000400L     /* Item has greater damage dice */
-#define ETR4_PVAL_M1           0x00000800L     /* Item has +1 to pval */
-#define ETR4_PVAL_M2           0x00001000L     /* Item has +(up to 2) to pval */
-#define ETR4_PVAL_M3           0x00002000L     /* Item has +(up to 3) to pval */
-#define ETR4_PVAL_M5           0x00004000L     /* Item has +(up to 5) to pval */
-#define ETR4_AC_M1             0x00008000L     /* Item has +1 to AC */
-#define ETR4_AC_M2             0x00010000L     /* Item has +(up to 2) to AC */
-#define ETR4_AC_M3             0x00020000L     /* Item has +(up to 3) to AC */
-#define ETR4_AC_M5             0x00040000L     /* Item has +(up to 5) to AC */
-#define ETR4_TH_M1             0x00080000L     /* Item has +1 to hit */
-#define ETR4_TH_M2             0x00100000L     /* Item has +(up to 2) to hit */
-#define ETR4_TH_M3             0x00200000L     /* Item has +(up to 3) to hit */
-#define ETR4_TH_M5             0x00400000L     /* Item has +(up to 5) to hit */
-#define ETR4_TD_M1             0x00800000L     /* Item has +1 to dam */
-#define ETR4_TD_M2             0x01000000L     /* Item has +(up to 2) to dam */
-#define ETR4_TD_M3             0x02000000L     /* Item has +(up to 3) to dam */
-#define ETR4_TD_M5             0x04000000L     /* Item has +(up to 5) to dam */
-#define ETR4_R_P_ABILITY       0x08000000L     /* Item has a random pval-affected ability */
-#define ETR4_R_STAT            0x10000000L     /* Item affects a random stat */
-#define ETR4_R_STAT_SUST       0x20000000L     /* Item affects a random stat & sustains it */
-#define ETR4_R_IMMUNITY        0x40000000L     /* Item gives a random immunity */
-#define ETR4_LIMIT_BLOWS       0x80000000L     /* switch the "limit blows" feature */
-
-/*** Features flags -- DG ***/
-#define FF1_NO_WALK             0x00000001L
-#define FF1_NO_VISION           0x00000002L
-#define FF1_CAN_LEVITATE        0x00000004L
-#define FF1_CAN_PASS            0x00000008L
-#define FF1_FLOOR               0x00000010L
-#define FF1_WALL                0x00000020L
-#define FF1_PERMANENT           0x00000040L
-#define FF1_CAN_FLY             0x00000080L
-#define FF1_REMEMBER            0x00000100L
-#define FF1_NOTICE              0x00000200L
-#define FF1_DONT_NOTICE_RUNNING 0x00000400L
-#define FF1_CAN_RUN             0x00000800L
-#define FF1_DOOR                0x00001000L
-#define FF1_SUPPORT_LIGHT       0x00002000L
-#define FF1_CAN_CLIMB           0x00004000L
-#define FF1_TUNNELABLE          0x00008000L
-#define FF1_WEB                 0x00010000L
-#define FF1_ATTR_MULTI          0x00020000L
-#define FF1_SUPPORT_GROWTH      0x00040000L
 
 /*** Town flags ***/
 #define TOWN_REAL	0x01	/* Town is really present */
@@ -2637,341 +2313,6 @@
 /*** Monster flag values (hard-coded) ***/
 
 #define MONSTER_LEVEL_MAX       150
-
-/*
- * New monster race bit flags
- */
-#define RF1_UNIQUE                      0x00000001      /* Unique Monster */
-#define RF1_QUESTOR                     0x00000002      /* Quest Monster */
-#define RF1_MALE                        0x00000004      /* Male gender */
-#define RF1_FEMALE                      0x00000008      /* Female gender */
-#define RF1_CHAR_CLEAR          0x00000010      /* Absorbs symbol */
-#define RF1_CHAR_MULTI          0x00000020      /* Changes symbol */
-#define RF1_ATTR_CLEAR          0x00000040      /* Absorbs color */
-#define RF1_ATTR_MULTI          0x00000080      /* Changes color */
-#define RF1_FORCE_DEPTH         0x00000100      /* Start at "correct" depth */
-#define RF1_FORCE_MAXHP         0x00000200      /* Start with max hitpoints */
-#define RF1_FORCE_SLEEP         0x00000400      /* Start out sleeping */
-#define RF1_FORCE_EXTRA         0x00000800      /* Start out something */
-#define RF1_FRIEND              0x00001000      /* Arrive with a friend */
-#define RF1_FRIENDS             0x00002000      /* Arrive with some friends */
-#define RF1_ESCORT              0x00004000      /* Arrive with an escort */
-#define RF1_ESCORTS             0x00008000      /* Arrive with some escorts */
-#define RF1_NEVER_BLOW          0x00010000      /* Never make physical blow */
-#define RF1_NEVER_MOVE          0x00020000      /* Never make physical move */
-#define RF1_RAND_25             0x00040000      /* Moves randomly (25%) */
-#define RF1_RAND_50             0x00080000      /* Moves randomly (50%) */
-#define RF1_ONLY_GOLD           0x00100000      /* Drop only gold */
-#define RF1_ONLY_ITEM           0x00200000      /* Drop only items */
-#define RF1_DROP_60             0x00400000      /* Drop an item/gold (60%) */
-#define RF1_DROP_90             0x00800000      /* Drop an item/gold (90%) */
-#define RF1_DROP_1D2            0x01000000      /* Drop 1d2 items/gold */
-#define RF1_DROP_2D2            0x02000000      /* Drop 2d2 items/gold */
-#define RF1_DROP_3D2            0x04000000      /* Drop 3d2 items/gold */
-#define RF1_DROP_4D2            0x08000000      /* Drop 4d2 items/gold */
-#define RF1_DROP_GOOD           0x10000000      /* Drop good items */
-#define RF1_DROP_GREAT          0x20000000      /* Drop great items */
-#define RF1_DROP_USEFUL         0x40000000      /* Drop "useful" items */
-#define RF1_DROP_CHOSEN         0x80000000      /* Drop "chosen" items */
-
-/*
- * New monster race bit flags
- */
-#define RF2_STUPID                      0x00000001      /* Monster is stupid */
-#define RF2_SMART                       0x00000002      /* Monster is smart */
-#define RF2_CAN_SPEAK            0x00000004  /* TY: can speak */
-#define RF2_REFLECTING                  0x00000008      /* Reflects bolts */
-#define RF2_INVISIBLE           0x00000010      /* Monster avoids vision */
-#define RF2_COLD_BLOOD          0x00000020      /* Monster avoids infra */
-#define RF2_EMPTY_MIND          0x00000040      /* Monster avoids telepathy */
-#define RF2_WEIRD_MIND          0x00000080      /* Monster avoids telepathy? */
-#define RF2_DEATH_ORB           0x00000100      /* Death Orb */
-#define RF2_REGENERATE          0x00000200      /* Monster regenerates */
-#define RF2_SHAPECHANGER        0x00000400  /* TY: shapechanger */
-#define RF2_ATTR_ANY            0x00000800  /* TY: Attr_any */
-#define RF2_POWERFUL            0x00001000      /* Monster has strong breath */
-#define RF2_ELDRITCH_HORROR             0x00002000      /* Sanity-blasting horror    */
-#define RF2_AURA_FIRE                   0x00004000      /* Burns in melee */
-#define RF2_AURA_ELEC                   0x00008000      /* Shocks in melee */
-#define RF2_OPEN_DOOR           0x00010000      /* Monster can open doors */
-#define RF2_BASH_DOOR           0x00020000      /* Monster can bash doors */
-#define RF2_PASS_WALL           0x00040000      /* Monster can pass walls */
-#define RF2_KILL_WALL           0x00080000      /* Monster can destroy walls */
-#define RF2_MOVE_BODY           0x00100000      /* Monster can move monsters */
-#define RF2_KILL_BODY           0x00200000      /* Monster can kill monsters */
-#define RF2_TAKE_ITEM           0x00400000      /* Monster can pick up items */
-#define RF2_KILL_ITEM           0x00800000      /* Monster can crush items */
-#define RF2_BRAIN_1                     0x01000000
-#define RF2_BRAIN_2                     0x02000000
-#define RF2_BRAIN_3                     0x04000000
-#define RF2_BRAIN_4                     0x08000000
-#define RF2_BRAIN_5                     0x10000000
-#define RF2_BRAIN_6                     0x20000000
-#define RF2_BRAIN_7                     0x40000000
-#define RF2_BRAIN_8                     0x80000000
-
-/*
- * New monster race bit flags
- */
-#define RF3_ORC                         0x00000001      /* Orc */
-#define RF3_TROLL                       0x00000002      /* Troll */
-#define RF3_GIANT                       0x00000004      /* Giant */
-#define RF3_DRAGON                      0x00000008      /* Dragon */
-#define RF3_DEMON                       0x00000010      /* Demon */
-#define RF3_UNDEAD                      0x00000020      /* Undead */
-#define RF3_EVIL                        0x00000040      /* Evil */
-#define RF3_ANIMAL                      0x00000080      /* Animal */
-#define RF3_THUNDERLORD            0x00000100  /* DG: Thunderlord */
-#define RF3_GOOD                        0x00000200      /* Good */
-#define RF3_AURA_COLD                        0x00000400      /* Freezes in melee */
-#define RF3_NONLIVING           0x00000800  /* TY: Non-Living (?) */
-#define RF3_HURT_LITE           0x00001000      /* Hurt by lite */
-#define RF3_HURT_ROCK           0x00002000      /* Hurt by rock remover */
-#define RF3_SUSCEP_FIRE           0x00004000      /* Hurt badly by fire */
-#define RF3_SUSCEP_COLD           0x00008000      /* Hurt badly by cold */
-#define RF3_IM_ACID                     0x00010000      /* Resist acid a lot */
-#define RF3_IM_ELEC                     0x00020000      /* Resist elec a lot */
-#define RF3_IM_FIRE                     0x00040000      /* Resist fire a lot */
-#define RF3_IM_COLD                     0x00080000      /* Resist cold a lot */
-#define RF3_IM_POIS                     0x00100000      /* Resist poison a lot */
-#define RF3_RES_TELE                    0x00200000      /* Resist teleportation */
-#define RF3_RES_NETH            0x00400000      /* Resist nether a lot */
-#define RF3_RES_WATE            0x00800000      /* Resist water */
-#define RF3_RES_PLAS            0x01000000      /* Resist plasma */
-#define RF3_RES_NEXU            0x02000000      /* Resist nexus */
-#define RF3_RES_DISE            0x04000000      /* Resist disenchantment */
-#define RF3_UNIQUE_4                    0x08000000      /* Is a "Nazgul" unique */
-#define RF3_NO_FEAR                     0x10000000      /* Cannot be scared */
-#define RF3_NO_STUN                     0x20000000      /* Cannot be stunned */
-#define RF3_NO_CONF                     0x40000000      /* Cannot be confused */
-#define RF3_NO_SLEEP            0x80000000      /* Cannot be slept */
-
-/*
- * New monster race bit flags
- */
-#define RF4_SHRIEK                      0x00000001  /* Shriek for help */
-#define RF4_MULTIPLY                    0x00000002  /* Monster reproduces */
-#define RF4_S_ANIMAL                    0x00000004  /* Summon animals */
-#define RF4_ROCKET                      0x00000008  /* TY: Rocket */
-#define RF4_ARROW_1                     0x00000010  /* Fire an arrow (light) */
-#define RF4_ARROW_2                     0x00000020  /* Fire an arrow (heavy) */
-#define RF4_ARROW_3                     0x00000040  /* Fire missiles (light) */
-#define RF4_ARROW_4                     0x00000080  /* Fire missiles (heavy) */
-#define RF4_BR_ACID                     0x00000100  /* Breathe Acid */
-#define RF4_BR_ELEC                     0x00000200  /* Breathe Elec */
-#define RF4_BR_FIRE                     0x00000400  /* Breathe Fire */
-#define RF4_BR_COLD                     0x00000800  /* Breathe Cold */
-#define RF4_BR_POIS                     0x00001000  /* Breathe Poison */
-#define RF4_BR_NETH                     0x00002000  /* Breathe Nether */
-#define RF4_BR_LITE                     0x00004000  /* Breathe Lite */
-#define RF4_BR_DARK                     0x00008000  /* Breathe Dark */
-#define RF4_BR_CONF                     0x00010000  /* Breathe Confusion */
-#define RF4_BR_SOUN                     0x00020000  /* Breathe Sound */
-#define RF4_BR_CHAO                     0x00040000  /* Breathe Chaos */
-#define RF4_BR_DISE                     0x00080000  /* Breathe Disenchant */
-#define RF4_BR_NEXU                     0x00100000  /* Breathe Nexus */
-#define RF4_BR_TIME                     0x00200000  /* Breathe Time */
-#define RF4_BR_INER                     0x00400000  /* Breathe Inertia */
-#define RF4_BR_GRAV                     0x00800000  /* Breathe Gravity */
-#define RF4_BR_SHAR                     0x01000000  /* Breathe Shards */
-#define RF4_BR_PLAS                     0x02000000  /* Breathe Plasma */
-#define RF4_BR_WALL                     0x04000000  /* Breathe Force */
-#define RF4_BR_MANA                     0x08000000  /* Breathe Mana */
-#define RF4_BA_NUKE                     0x10000000  /* TY: Nuke Ball */
-#define RF4_BR_NUKE                     0x20000000  /* TY: Toxic Breath */
-#define RF4_BA_CHAO                     0x40000000  /* Chaos Ball */
-#define RF4_BR_DISI                     0x80000000  /* Breathe Disintegration */
-
-/*
- * New monster race bit flags
- */
-#define RF5_BA_ACID                     0x00000001      /* Acid Ball */
-#define RF5_BA_ELEC                     0x00000002      /* Elec Ball */
-#define RF5_BA_FIRE                     0x00000004      /* Fire Ball */
-#define RF5_BA_COLD                     0x00000008      /* Cold Ball */
-#define RF5_BA_POIS                     0x00000010      /* Poison Ball */
-#define RF5_BA_NETH                     0x00000020      /* Nether Ball */
-#define RF5_BA_WATE                     0x00000040      /* Water Ball */
-#define RF5_BA_MANA                     0x00000080      /* Mana Storm */
-#define RF5_BA_DARK                     0x00000100      /* Darkness Storm */
-#define RF5_DRAIN_MANA          0x00000200      /* Drain Mana */
-#define RF5_MIND_BLAST          0x00000400      /* Blast Mind */
-#define RF5_BRAIN_SMASH         0x00000800      /* Smash Brain */
-#define RF5_CAUSE_1                     0x00001000      /* Cause Light Wound */
-#define RF5_CAUSE_2                     0x00002000      /* Cause Serious Wound */
-#define RF5_CAUSE_3                     0x00004000      /* Cause Critical Wound */
-#define RF5_CAUSE_4                     0x00008000      /* Cause Mortal Wound */
-#define RF5_BO_ACID                     0x00010000      /* Acid Bolt */
-#define RF5_BO_ELEC                     0x00020000      /* Elec Bolt (unused) */
-#define RF5_BO_FIRE                     0x00040000      /* Fire Bolt */
-#define RF5_BO_COLD                     0x00080000      /* Cold Bolt */
-#define RF5_BO_POIS                     0x00100000      /* Poison Bolt (unused) */
-#define RF5_BO_NETH                     0x00200000      /* Nether Bolt */
-#define RF5_BO_WATE                     0x00400000      /* Water Bolt */
-#define RF5_BO_MANA                     0x00800000      /* Mana Bolt */
-#define RF5_BO_PLAS                     0x01000000      /* Plasma Bolt */
-#define RF5_BO_ICEE                     0x02000000      /* Ice Bolt */
-#define RF5_MISSILE                     0x04000000      /* Magic Missile */
-#define RF5_SCARE                       0x08000000      /* Frighten Player */
-#define RF5_BLIND                       0x10000000      /* Blind Player */
-#define RF5_CONF                        0x20000000      /* Confuse Player */
-#define RF5_SLOW                        0x40000000      /* Slow Player */
-#define RF5_HOLD                        0x80000000      /* Paralyze Player */
-
-/*
- * New monster race bit flags
- */
-#define RF6_HASTE                       0x00000001      /* Speed self */
-#define RF6_HAND_DOOM                   0x00000002      /* Hand of Doom */
-#define RF6_HEAL                        0x00000004      /* Heal self */
-#define RF6_S_ANIMALS                   0x00000008      /* Summon animals */
-#define RF6_BLINK                       0x00000010      /* Teleport Short */
-#define RF6_TPORT                       0x00000020      /* Teleport Long */
-#define RF6_TELE_TO                     0x00000040      /* Move player to monster */
-#define RF6_TELE_AWAY                   0x00000080      /* Move player far away */
-#define RF6_TELE_LEVEL                  0x00000100      /* Move player vertically */
-#define RF6_DARKNESS                    0x00000200      /* Create Darkness */
-#define RF6_TRAPS                       0x00000400      /* Create Traps */
-#define RF6_FORGET                      0x00000800      /* Cause amnesia */
-#define RF6_RAISE_DEAD                  0x00001000      /* Raise Dead */
-#define RF6_S_BUG                       0x00002000      /* Summon Software bug */
-#define RF6_S_RNG                       0x00004000      /* Summon RNG */
-#define RF6_S_THUNDERLORD               0x00008000      /* Summon Thunderlords */
-#define RF6_S_KIN                       0x00010000      /* Summon "kin" */
-#define RF6_S_HI_DEMON                  0x00020000      /* Summon greater demons! */
-#define RF6_S_MONSTER                   0x00040000      /* Summon Monster */
-#define RF6_S_MONSTERS                  0x00080000      /* Summon Monsters */
-#define RF6_S_ANT                       0x00100000      /* Summon Ants */
-#define RF6_S_SPIDER                    0x00200000      /* Summon Spiders */
-#define RF6_S_HOUND                     0x00400000      /* Summon Hounds */
-#define RF6_S_HYDRA                     0x00800000      /* Summon Hydras */
-#define RF6_S_ANGEL                     0x01000000      /* Summon Angel */
-#define RF6_S_DEMON                     0x02000000      /* Summon Demon */
-#define RF6_S_UNDEAD            0x04000000      /* Summon Undead */
-#define RF6_S_DRAGON            0x08000000      /* Summon Dragon */
-#define RF6_S_HI_UNDEAD         0x10000000      /* Summon Greater Undead */
-#define RF6_S_HI_DRAGON         0x20000000      /* Summon Ancient Dragon */
-#define RF6_S_WRAITH            0x40000000      /* Summon Unique Wraith */
-#define RF6_S_UNIQUE            0x80000000      /* Summon Unique Monster */
-
-/*
- * New monster race bit flags
- */
-#define RF7_AQUATIC             0x00000001  /* Aquatic monster */
-#define RF7_CAN_SWIM            0x00000002  /* Monster can swim */
-#define RF7_CAN_FLY             0x00000004  /* Monster can fly */
-#define RF7_FRIENDLY            0x00000008  /* Monster is friendly */
-#define RF7_PET                 0x00000010  /* Monster is a pet */
-#define RF7_MORTAL              0x00000020  /* Monster is a mortal being */
-#define RF7_SPIDER              0x00000040  /* Monster is a spider (can pass webs) */
-#define RF7_NAZGUL              0x00000080  /* Monster is a Nazgul */
-#define RF7_DG_CURSE            0x00000100  /* If killed the monster grant a DG Curse to the player */
-#define RF7_POSSESSOR           0x00000200  /* Is it a dreaded possessor monster ? */
-#define RF7_NO_DEATH            0x00000400  /* Cannot be killed */
-#define RF7_NO_TARGET           0x00000800  /* Cannot be targeted */
-#define RF7_AI_ANNOY            0x00001000  /* Try to tease the player */
-#define RF7_AI_SPECIAL          0x00002000  /* For quests */
-#define RF7_NEUTRAL             0x00004000  /* Monster is neutral */
-#define RF7_DROP_ART            0x00008000  /* Monster drop one art */
-#define RF7_DROP_RANDART        0x00010000  /* Monster drop one randart */
-#define RF7_AI_PLAYER           0x00020000  /* Controlled by the player */
-#define RF7_NO_THEFT		0x00040000  /* Monster is immune to theft */
-#define RF7_SPIRIT		0x00080000  /* This is a Spirit, coming from the Void */
-
-
-/*
- * Monster race flags
- */
-#define RF8_DUNGEON             0x00000001
-#define RF8_WILD_TOWN           0x00000002
-#define RF8_XXX8X02             0x00000004
-#define RF8_WILD_SHORE          0x00000008
-#define RF8_WILD_OCEAN          0x00000010
-#define RF8_WILD_WASTE          0x00000020
-#define RF8_WILD_WOOD           0x00000040
-#define RF8_WILD_VOLCANO        0x00000080
-#define RF8_XXX8X08             0x00000100
-#define RF8_WILD_MOUNTAIN       0x00000200
-#define RF8_WILD_GRASS          0x00000400
-#define RF8_NO_CUT              0x00000800
-#define RF8_CTHANGBAND          0x00001000  /* Not used in ToME */
-/* XXX */
-#define RF8_ZANGBAND            0x00004000  /* Not used in ToME */
-#define RF8_JOKEANGBAND         0x00008000
-#define RF8_ANGBAND             0x00010000
-
-#define RF8_WILD_TOO            0x80000000
-
-
-/*
- * Monster race flags
- */
-#define RF9_DROP_CORPSE         0x00000001
-#define RF9_DROP_SKELETON       0x00000002
-#define RF9_HAS_LITE            0x00000004      /* Carries a lite */
-#define RF9_MIMIC               0x00000008      /* *REALLY* looks like an object ... only nastier */
-#define RF9_HAS_EGG             0x00000010      /* Can be monster's eggs */
-#define RF9_IMPRESED            0x00000020      /* The monster can follow you on each level until he dies */
-#define RF9_SUSCEP_ACID         0x00000040      /* Susceptible to acid */
-#define RF9_SUSCEP_ELEC         0x00000080      /* Susceptible to lightning */
-#define RF9_SUSCEP_POIS         0x00000100      /* Susceptible to poison */
-#define RF9_KILL_TREES          0x00000200      /* Monster can eat trees */
-#define RF9_WYRM_PROTECT        0x00000400      /* The monster is protected by great wyrms of power: They'll be summoned if it's killed */
-#define RF9_DOPPLEGANGER        0x00000800      /* The monster looks like you */
-#define RF9_ONLY_DEPTH          0x00001000      /* The monster can only be generated at the GIVEN depth */
-#define RF9_SPECIAL_GENE        0x00002000      /* The monster can only be generated in special conditions like quests, special dungeons, ... */
-#define RF9_NEVER_GENE          0x00004000      /* The monster cannot be normaly generated */
-
-
-/*
- * Hack -- choose "intelligent" spells when desperate
- */
-
-#define RF4_INT_MASK \
-   (RF4_S_ANIMAL)
-
-#define RF5_INT_MASK \
-  (RF5_HOLD | RF5_SLOW | RF5_CONF | RF5_BLIND | RF5_SCARE)
-
-#define RF6_INT_MASK \
-   (RF6_BLINK |  RF6_TPORT | RF6_TELE_LEVEL | RF6_TELE_AWAY | \
-    RF6_HEAL | RF6_HASTE | RF6_TRAPS | \
-    RF6_S_KIN | RF6_S_HI_DEMON | RF6_S_MONSTER | RF6_S_MONSTERS | \
-    RF6_S_ANT | RF6_S_SPIDER | RF6_S_HOUND | RF6_S_HYDRA | \
-    RF6_S_ANGEL | RF6_S_DRAGON | RF6_S_UNDEAD | RF6_S_DEMON | \
-    RF6_S_HI_DRAGON | RF6_S_HI_UNDEAD | RF6_S_WRAITH | RF6_S_UNIQUE | \
-    RF6_S_THUNDERLORD | RF6_S_BUG | RF6_S_RNG | RF6_S_ANIMALS)
-
-
-/*
- * Hack -- "bolt" spells that may hurt fellow monsters
- */
-#define RF4_BOLT_MASK \
-  (RF4_ARROW_1 | RF4_ARROW_2 | RF4_ARROW_3 | RF4_ARROW_4)
-
-#define RF5_BOLT_MASK \
-   (RF5_BO_ACID | RF5_BO_ELEC | RF5_BO_FIRE | RF5_BO_COLD | \
-    RF5_BO_POIS | RF5_BO_NETH | RF5_BO_WATE | RF5_BO_MANA | \
-    RF5_BO_PLAS | RF5_BO_ICEE | RF5_MISSILE)
-
-#define RF6_BOLT_MASK \
-   0L
-
-
-/* Hack -- summon spells */
-
-#define RF4_SUMMON_MASK \
-    (RF4_S_ANIMAL)
-
-#define RF5_SUMMON_MASK \
-    0L
-
-#define RF6_SUMMON_MASK \
-    (RF6_S_KIN | RF6_S_HI_DEMON | RF6_S_MONSTER | RF6_S_MONSTERS | RF6_S_ANT | \
-     RF6_S_SPIDER | RF6_S_HOUND | RF6_S_HYDRA | RF6_S_ANGEL | RF6_S_DEMON | \
-     RF6_S_UNDEAD | RF6_S_DRAGON | RF6_S_HI_UNDEAD | RF6_S_HI_DRAGON | \
-     RF6_S_WRAITH | RF6_S_UNIQUE | RF6_S_THUNDERLORD | RF6_S_BUG | RF6_S_RNG | \
-     RF6_S_ANIMALS)
 
 
 /*** Macro Definitions ***/
@@ -3086,7 +2427,6 @@
 #define BACT_REST                   17
 #define BACT_FOOD                   18
 #define BACT_RUMORS                 19
-#define BACT_RESEARCH_MONSTER       20
 #define BACT_COMPARE_WEAPONS        21
 #define BACT_ENCHANT_WEAPON         23
 #define BACT_ENCHANT_ARMOR          24
@@ -3276,12 +2616,6 @@
 
 #define MEGO_CHANCE             18      /* % chances of getting ego monsters */
 
-/* Object generation */
-#define OBJ_GENE_TREASURE       20
-#define OBJ_GENE_COMBAT         20
-#define OBJ_GENE_MAGIC          20
-#define OBJ_GENE_TOOL           20
-
 /*
  * Used (or should be) by various functions and tables needing access to
  * single bits
@@ -3292,21 +2626,6 @@
 #define TOWN_RANDOM     20              /* First random town */
 #define TOWN_CHANCE     50              /* Chance of 1 town */
 
-
-/*
- * Store flags
- */
-#define SF1_DEPEND_LEVEL        0x00000001L
-#define SF1_SHALLOW_LEVEL       0x00000002L
-#define SF1_MEDIUM_LEVEL        0x00000004L
-#define SF1_DEEP_LEVEL          0x00000008L
-#define SF1_RARE                0x00000010L
-#define SF1_VERY_RARE           0x00000020L
-#define SF1_COMMON              0x00000040L
-#define SF1_ALL_ITEM            0x00000080L     /* Works as the BM */
-#define SF1_RANDOM              0x00000100L
-#define SF1_FORCE_LEVEL         0x00000200L
-#define SF1_MUSEUM              0x00000400L
 
 /*
  * Shield effect options
@@ -3481,11 +2800,6 @@
 
 /* Number of skill choices for Lost Sword quests. */
 #define LOST_SWORD_NSKILLS	4
-
-/* SKill flags */
-#define SKF1_HIDDEN             0x00000001      /* Starts hidden */
-#define SKF1_AUTO_HIDE          0x00000002      /* Tries to rehide at calc_bonus */
-#define SKF1_RANDOM_GAIN        0x00000004      /* Can be randomly gained by certain quests & such */
 
 #define MAX_MELEE               3
 

@@ -3,12 +3,14 @@
 #include "cave.hpp"
 #include "cave_type.hpp"
 #include "cmd5.hpp"
+#include "feature_flag.hpp"
 #include "feature_type.hpp"
 #include "lua_bind.hpp"
 #include "mimic.hpp"
 #include "monster2.hpp"
 #include "monster3.hpp"
 #include "monster_race.hpp"
+#include "monster_race_flag.hpp"
 #include "monster_type.hpp"
 #include "object1.hpp"
 #include "object2.hpp"
@@ -2271,7 +2273,7 @@ casting_result melkor_mind_steal()
 
 		auto const r_ptr = m_ptr->race();
 		if ((randint(m_ptr->level) < chance) &&
-		    ((r_ptr->flags1 & RF1_UNIQUE) == 0))
+		    ((r_ptr->flags & RF_UNIQUE).empty()))
 		{
 			p_ptr->control = target_who;
 			m_ptr->mflag |= MFLAG_CONTROL;
@@ -2737,8 +2739,8 @@ casting_result tempo_magelock()
 
 			c_ptr = &cave[y][x];
 
-			if ((!(f_info[c_ptr->feat].flags1 | FF1_FLOOR)) ||
-			    (f_info[c_ptr->feat].flags1 | FF1_PERMANENT) ||
+			if ((!(f_info[c_ptr->feat].flags | FF_FLOOR)) ||
+			    (f_info[c_ptr->feat].flags | FF_PERMANENT) ||
 			    (!los(p_ptr->py, p_ptr->px, y, x)))
 			{
 				msg_print("You cannot place it there.");

@@ -16,8 +16,11 @@
 #include "lua_bind.hpp"
 #include "monster2.hpp"
 #include "monster_race.hpp"
+#include "monster_race_flag.hpp"
+#include "monster_spell_flag.hpp"
 #include "object1.hpp"
 #include "object2.hpp"
+#include "object_flag.hpp"
 #include "object_type.hpp"
 #include "player_class.hpp"
 #include "player_race.hpp"
@@ -70,7 +73,7 @@ static object_filter_t const &hook_school_spellable()
 	static auto instance = Or(
 		is_school_book(),
 		And(
-			HasFlag5(TR5_SPELL_CONTAIN),
+			HasFlags(TR_SPELL_CONTAIN),
 			has_pval2));
 	return instance;
 }
@@ -224,14 +227,13 @@ static void browse_school_spell(int book, int spell_idx, object_type *o_ptr)
 
 extern void do_cmd_browse_aux(object_type *o_ptr)
 {
-	u32b f1, f2, f3, f4, f5, esp;
-	object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
+	auto const flags = object_flags(o_ptr);
 
 	if (is_school_book()(o_ptr))
 	{
 		browse_school_spell(o_ptr->sval, o_ptr->pval, o_ptr);
 	}
-	else if (f5 & TR5_SPELL_CONTAIN && o_ptr->pval2 != -1)
+	else if ((flags & TR_SPELL_CONTAIN) && (o_ptr->pval2 != -1))
 	{
 		browse_school_spell(255, o_ptr->pval2, o_ptr);
 	}
@@ -591,7 +593,7 @@ cptr symbiote_name(bool_ capitalize)
 		monster_race *r_ptr = &r_info[o_ptr->pval];
 		cptr s = NULL;
 
-		if (r_ptr->flags1 & RF1_UNIQUE)
+		if (r_ptr->flags & RF_UNIQUE)
 		{
 			/* Unique monster; no preceding "your", and ignore our name. */
 			strncpy(buf, r_ptr->name, sizeof(buf));
@@ -616,44 +618,43 @@ cptr symbiote_name(bool_ capitalize)
 	return buf;
 }
 
+
+/*
+ * Find monster power
+ */
+monster_power const *lookup_monster_power(std::size_t idx)
+{
+	for (auto const &p: monster_powers)
+	{
+		if (p.monster_spell_index == idx)
+		{
+			return &p;
+		}
+	}
+	return nullptr;
+}
+
+
 /*
  * Extract powers
  */
-std::vector<int> extract_monster_powers(monster_race const *r_ptr, bool great)
+std::vector<monster_power const *> extract_monster_powers(monster_race const *r_ptr, bool great)
 {
-	std::vector<int> powers;
+	std::vector<monster_power const *> powers;
 	powers.reserve(MONSTER_POWERS_MAX);
 
-	/* List the monster powers -- RF4_* */
-	for (std::size_t i = 0; i < 32; i++)
+	for (std::size_t i = 0; i < monster_spell_flag_set::nbits; i++)
 	{
-		if (r_ptr->flags4 & BIT(i))
+		if (r_ptr->spells.bit(i))
 		{
-			if (monster_powers[i].great && (!great)) continue;
-			if (!monster_powers[i].power) continue;
-			powers.push_back(i);
-		}
-	}
-
-	/* List the monster powers -- RF5_* */
-	for (std::size_t i = 0; i < 32; i++)
-	{
-		if (r_ptr->flags5 & BIT(i))
-		{
-			if (monster_powers[i + 32].great && (!great)) continue;
-			if (!monster_powers[i + 32].power) continue;
-			powers.push_back(i + 32);
-		}
-	}
-
-	/* List the monster powers -- RF6_* */
-	for (std::size_t i = 0; i < 32; i++)
-	{
-		if (r_ptr->flags6 & BIT(i))
-		{
-			if (monster_powers[i + 64].great && (!great)) continue;
-			if (!monster_powers[i + 64].power) continue;
-			powers.push_back(i + 64);
+			if (auto power = lookup_monster_power(i))
+			{
+				if (power->great && (!great))
+				{
+					continue;
+				}
+				powers.push_back(power);
+			}
 		}
 	}
 
@@ -677,7 +678,7 @@ static int calc_monster_spell_mana(monster_power const *mp_ptr)
 static std::tuple<int, int> choose_monster_power(monster_race const *r_ptr, bool great, bool symbiosis)
 {
 	/* Extract available monster powers */
-	std::vector<int> powers = extract_monster_powers(r_ptr, great);
+	auto powers = extract_monster_powers(r_ptr, great);
 	int const num = powers.size(); // Avoid signed/unsigned warnings
 
 	if (!num)
@@ -701,7 +702,7 @@ static std::tuple<int, int> choose_monster_power(monster_race const *r_ptr, bool
 	Term_save();
 
 	/* Get a spell from the user */
-	int power = -1; // Selected power
+	monster_power const *power = nullptr;
 	bool_ flag = FALSE; // Nothing chosen yet
 	while (!flag)
 	{
@@ -716,7 +717,7 @@ static std::tuple<int, int> choose_monster_power(monster_race const *r_ptr, bool
 
 			while (ctr < num)
 			{
-				monster_power *mp_ptr = &monster_powers[powers[ctr]];
+				monster_power const *mp_ptr = powers[ctr];
 
 				label = (ctr < 26) ? I2A(ctr) : I2D(ctr - 26);
 
@@ -799,12 +800,13 @@ static std::tuple<int, int> choose_monster_power(monster_race const *r_ptr, bool
 			continue;
 		}
 
-		/* Save the spell index */
+		/* Save the spell */
 		power = powers[i];
 
 		/* Make sure it's actually possible for the player to cast */
-		if (!symbiosis) {
-			if (p_ptr->csp < calc_monster_spell_mana(&monster_powers[power]))
+		if (!symbiosis)
+		{
+			if (p_ptr->csp < calc_monster_spell_mana(power))
 			{
 				bell();
 				continue;
@@ -817,7 +819,7 @@ static std::tuple<int, int> choose_monster_power(monster_race const *r_ptr, bool
 			char tmp_val[160];
 
 			/* Prompt */
-			strnfmt(tmp_val, 78, "Use %s? ", monster_powers[power].name);
+			strnfmt(tmp_val, 78, "Use %s? ", power->name);
 
 			/* Belay that order */
 			if (!get_check(tmp_val)) continue;
@@ -832,22 +834,22 @@ static std::tuple<int, int> choose_monster_power(monster_race const *r_ptr, bool
 	character_icky = FALSE;
 
 	/* Abort if needed */
-	if (!flag)
+	if (!flag || (power == nullptr))
 	{
 		return std::make_tuple(-1, num);
 	}
 
-	return std::make_tuple(power, num);
+	return std::make_tuple(power->monster_spell_index, num);
 }
 
 
 /*
  * Apply the effect of a monster power
  */
-static void apply_monster_power(monster_race const *r_ptr, int power)
+static void apply_monster_power(monster_race const *r_ptr, std::size_t monster_spell_idx)
 {
-	assert(power >= 0);
-	assert(power < MONSTER_POWERS_MAX);
+	assert(monster_spell_idx >= 0);
+	assert(monster_spell_idx < monster_spell_flag_set::nbits);
 
 	/* Shorthand */
 	int const x = p_ptr->px;
@@ -856,41 +858,35 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 	int const rlev = ((r_ptr->level >= 1) ? r_ptr->level : 1);
 
 	/* 'Powerful' monsters have wider radii */
-	int rad = (r_ptr->flags2 & RF2_POWERFUL)
+	int rad = (r_ptr->flags & RF_POWERFUL)
 			? 1 + (p_ptr->lev / 15)
 			: 1 + (p_ptr->lev / 20);
 
 	/* Analyse power */
-	switch (power)
+	switch (monster_spell_idx)
 	{
-		/**** RF4 (bit position) ****/
-
-		/* SHRIEK */
-	case 0:
+	case SF_SHRIEK_IDX:
 		{
 			aggravate_monsters( -1);
 
 			break;
 		}
 
-		/* MULTIPLY */
-	case 1:
+	case SF_MULTIPLY_IDX:
 		{
 			do_cmd_wiz_named_friendly(p_ptr->body_monster, FALSE);
 
 			break;
 		}
 
-		/* S_ANIMAL */
-	case 2:
+	case SF_S_ANIMAL_IDX:
 		{
 			summon_specific_friendly(y, x, rlev, SUMMON_ANIMAL, TRUE);
 
 			break;
 		}
 
-		/* ROCKET */
-	case 3:
+	case SF_ROCKET_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -900,8 +896,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* ARROW_1 */
-	case 4:
+	case SF_ARROW_1_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -911,8 +906,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* ARROW_2 */
-	case 5:
+	case SF_ARROW_2_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -922,8 +916,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* ARROW_3 */
-	case 6:
+	case SF_ARROW_3_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -933,8 +926,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* ARROW_4 */
-	case 7:
+	case SF_ARROW_4_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -944,8 +936,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_ACID */
-	case 8:
+	case SF_BR_ACID_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -955,8 +946,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_ELEC */
-	case 9:
+	case SF_BR_ELEC_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -966,8 +956,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_FIRE */
-	case 10:
+	case SF_BR_FIRE_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -977,8 +966,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_COLD */
-	case 11:
+	case SF_BR_COLD_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -988,8 +976,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_POIS */
-	case 12:
+	case SF_BR_POIS_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -999,8 +986,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_NETH */
-	case 13:
+	case SF_BR_NETH_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1010,8 +996,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_LITE */
-	case 14:
+	case SF_BR_LITE_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1021,8 +1006,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_DARK */
-	case 15:
+	case SF_BR_DARK_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1032,8 +1016,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_CONF */
-	case 16:
+	case SF_BR_CONF_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1043,8 +1026,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_SOUN */
-	case 17:
+	case SF_BR_SOUN_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1054,8 +1036,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_CHAO */
-	case 18:
+	case SF_BR_CHAO_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1065,8 +1046,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_DISE */
-	case 19:
+	case SF_BR_DISE_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1076,8 +1056,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_NEXU */
-	case 20:
+	case SF_BR_NEXU_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1087,8 +1066,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_TIME */
-	case 21:
+	case SF_BR_TIME_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1098,8 +1076,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_INER */
-	case 22:
+	case SF_BR_INER_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1109,8 +1086,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_GRAV */
-	case 23:
+	case SF_BR_GRAV_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1120,8 +1096,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_SHAR */
-	case 24:
+	case SF_BR_SHAR_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1131,8 +1106,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_PLAS */
-	case 25:
+	case SF_BR_PLAS_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1142,8 +1116,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_WALL */
-	case 26:
+	case SF_BR_WALL_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1153,8 +1126,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_MANA */
-	case 27:
+	case SF_BR_MANA_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1164,8 +1136,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BA_NUKE */
-	case 28:
+	case SF_BA_NUKE_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1175,8 +1146,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_NUKE */
-	case 29:
+	case SF_BR_NUKE_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1186,8 +1156,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BA_CHAO */
-	case 30:
+	case SF_BA_CHAO_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1197,8 +1166,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BR_DISI */
-	case 31:
+	case SF_BR_DISI_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1208,11 +1176,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-
-		/**** RF5 (bit position + 32) ****/
-
-		/* BA_ACID */
-	case 32:
+	case SF_BA_ACID_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1222,8 +1186,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BA_ELEC */
-	case 33:
+	case SF_BA_ELEC_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1233,8 +1196,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BA_FIRE */
-	case 34:
+	case SF_BA_FIRE_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1244,8 +1206,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BA_COLD */
-	case 35:
+	case SF_BA_COLD_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1255,8 +1216,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BA_POIS */
-	case 36:
+	case SF_BA_POIS_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1266,8 +1226,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BA_NETH */
-	case 37:
+	case SF_BA_NETH_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1277,8 +1236,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BA_WATE */
-	case 38:
+	case SF_BA_WATE_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1288,8 +1246,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BA_MANA */
-	case 39:
+	case SF_BA_MANA_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1299,8 +1256,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BA_DARK */
-	case 40:
+	case SF_BA_DARK_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1310,14 +1266,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* 41 DRAIN_MANA -- Not available */
-
-		/* 42 MIND_BLAST -- Not available */
-
-		/* 43 BRAIN_SMASH -- Not available */
-
-		/* CAUSE_1 */
-	case 44:
+	case SF_CAUSE_1_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1327,8 +1276,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* CAUSE_2 */
-	case 45:
+	case SF_CAUSE_2_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1338,8 +1286,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* CAUSE_3 */
-	case 46:
+	case SF_CAUSE_3_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1349,8 +1296,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* CAUSE_4 */
-	case 47:
+	case SF_CAUSE_4_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1360,8 +1306,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BO_ACID */
-	case 48:
+	case SF_BO_ACID_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1371,8 +1316,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BO_ELEC */
-	case 49:
+	case SF_BO_ELEC_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1382,8 +1326,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BO_FIRE */
-	case 50:
+	case SF_BO_FIRE_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1393,8 +1336,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BO_COLD */
-	case 51:
+	case SF_BO_COLD_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1404,8 +1346,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BO_POIS */
-	case 52:
+	case SF_BO_POIS_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1415,8 +1356,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BO_NETH */
-	case 53:
+	case SF_BO_NETH_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1426,8 +1366,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BO_WATE */
-	case 54:
+	case SF_BO_WATE_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1437,8 +1376,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BO_MANA */
-	case 55:
+	case SF_BO_MANA_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1448,8 +1386,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BO_PLAS */
-	case 56:
+	case SF_BO_PLAS_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1459,8 +1396,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BO_ICEE */
-	case 57:
+	case SF_BO_ICEE_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1470,8 +1406,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* MISSILE */
-	case 58:
+	case SF_MISSILE_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1481,8 +1416,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* SCARE */
-	case 59:
+	case SF_SCARE_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1492,8 +1426,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BLIND */
-	case 60:
+	case SF_BLIND_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1503,8 +1436,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* CONF */
-	case 61:
+	case SF_CONF_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1514,8 +1446,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* SLOW */
-	case 62:
+	case SF_SLOW_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1525,8 +1456,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* HOLD */
-	case 63:
+	case SF_HOLD_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1536,11 +1466,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-
-		/**** RF6 (bit position + 64) ****/
-
-		/* HASTE */
-	case 64:
+	case SF_HASTE_IDX:
 		{
 			if (!p_ptr->fast)
 			{
@@ -1554,8 +1480,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* HAND_DOOM */
-	case 65:
+	case SF_HAND_DOOM_IDX:
 		{
 			int dir;
 			if (!get_aim_dir(&dir)) break;
@@ -1565,16 +1490,14 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* HEAL */
-	case 66:
+	case SF_HEAL_IDX:
 		{
 			hp_player(damroll(8, 5));
 
 			break;
 		}
 
-		/* S_ANIMALS */
-	case 67:
+	case SF_S_ANIMALS_IDX:
 		{
 			for (int k = 0; k < 4; k++)
 			{
@@ -1584,8 +1507,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* BLINK */
-	case 68:
+	case SF_BLINK_IDX:
 		{
 			if (dungeon_flags & DF_NO_TELEPORT)
 			{
@@ -1598,8 +1520,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* TPORT */
-	case 69:
+	case SF_TPORT_IDX:
 		{
 			if (dungeon_flags & DF_NO_TELEPORT)
 			{
@@ -1612,8 +1533,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* TELE_TO */
-	case 70:
+	case SF_TELE_TO_IDX:
 		{
 			int ii, ij;
 
@@ -1642,8 +1562,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* TELE_AWAY */
-	case 71:
+	case SF_TELE_AWAY_IDX:
 		{
 			if (dungeon_flags & DF_NO_TELEPORT)
 			{
@@ -1659,8 +1578,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* TELE_LEVEL */
-	case 72:
+	case SF_TELE_LEVEL_IDX:
 		{
 			if (dungeon_flags & DF_NO_TELEPORT)
 			{
@@ -1673,8 +1591,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* DARKNESS */
-	case 73:
+	case SF_DARKNESS_IDX:
 		{
 			(void)project( -1, 3, p_ptr->py, p_ptr->px, 0, GF_DARK_WEAK,
 				       PROJECT_GRID | PROJECT_KILL);
@@ -1685,33 +1602,14 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* TRAPS */
-	case 74:
+	case SF_TRAPS_IDX:
 		{
 			trap_creation();
 
 			break;
 		}
 
-		/* 75 FORGET -- Not available */
-
-		/* ANIM_DEAD -- Use the same code as the nether spell */
-	case 76:
-		{
-			int dir;
-			if (!get_aim_dir(&dir)) break;
-
-			fire_ball(GF_RAISE, dir, 1, 0);
-
-			break;
-		}
-
-		/* 77 S_BUG -- Not available, well we do that anyway ;) */
-
-		/* 78 S_RNG -- Not available, who dares? */
-
-		/* S_THUNDERLORD */
-	case 79:
+	case SF_S_THUNDERLORD_IDX:
 		{
 			for (int k = 0; k < 1; k++)
 			{
@@ -1721,8 +1619,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* S_KIN -- Summon Kin, because we code bugs :) */
-	case 80:
+	case SF_S_KIN_IDX:
 		{
 			/* Big hack */
 			summon_kin_type = r_ptr->d_char;
@@ -1735,8 +1632,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* S_HI_DEMON */
-	case 81:
+	case SF_S_HI_DEMON_IDX:
 		{
 			for (int k = 0; k < 1; k++)
 			{
@@ -1746,8 +1642,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* S_MONSTER */
-	case 82:
+	case SF_S_MONSTER_IDX:
 		{
 			for (int k = 0; k < 1; k++)
 			{
@@ -1757,8 +1652,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* S_MONSTERS */
-	case 83:
+	case SF_S_MONSTERS_IDX:
 		{
 			for (int k = 0; k < 6; k++)
 			{
@@ -1768,8 +1662,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* S_ANT */
-	case 84:
+	case SF_S_ANT_IDX:
 		{
 			for (int k = 0; k < 6; k++)
 			{
@@ -1779,8 +1672,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* S_SPIDER */
-	case 85:
+	case SF_S_SPIDER_IDX:
 		{
 			for (int k = 0; k < 6; k++)
 			{
@@ -1790,8 +1682,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* S_HOUND */
-	case 86:
+	case SF_S_HOUND_IDX:
 		{
 			for (int k = 0; k < 6; k++)
 			{
@@ -1801,8 +1692,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* S_HYDRA */
-	case 87:
+	case SF_S_HYDRA_IDX:
 		{
 			for (int k = 0; k < 6; k++)
 			{
@@ -1812,8 +1702,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* S_ANGEL */
-	case 88:
+	case SF_S_ANGEL_IDX:
 		{
 			for (int k = 0; k < 1; k++)
 			{
@@ -1823,8 +1712,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* S_DEMON */
-	case 89:
+	case SF_S_DEMON_IDX:
 		{
 			for (int k = 0; k < 1; k++)
 			{
@@ -1834,8 +1722,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* S_UNDEAD */
-	case 90:
+	case SF_S_UNDEAD_IDX:
 		{
 			for (int k = 0; k < 1; k++)
 			{
@@ -1845,8 +1732,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* S_DRAGON */
-	case 91:
+	case SF_S_DRAGON_IDX:
 		{
 			for (int k = 0; k < 1; k++)
 			{
@@ -1856,8 +1742,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* S_HI_UNDEAD */
-	case 92:
+	case SF_S_HI_UNDEAD_IDX:
 		{
 			for (int k = 0; k < 8; k++)
 			{
@@ -1867,8 +1752,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* S_HI_DRAGON */
-	case 93:
+	case SF_S_HI_DRAGON_IDX:
 		{
 			for (int k = 0; k < 8; k++)
 			{
@@ -1878,8 +1762,7 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 			break;
 		}
 
-		/* S_WRAITH */
-	case 94:
+	case SF_S_WRAITH_IDX:
 		{
 			for (int k = 0; k < 8; k++)
 			{
@@ -1888,8 +1771,6 @@ static void apply_monster_power(monster_race const *r_ptr, int power)
 
 			break;
 		}
-
-		/* 95 S_UNIQUE -- Not available */
 	}
 }
 
@@ -1986,11 +1867,10 @@ boost::optional<int> get_item_hook_find_spell(object_filter_t const &)
 		object_type *o_ptr = &p_ptr->inventory[i];
 
 		/* Extract object flags */
-		u32b f1, f2, f3, f4, f5, esp;
-		object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
+		auto const flags = object_flags(o_ptr);
 
 		/* Must we wield it to cast from it? */
-		if ((wield_slot(o_ptr) != -1) && (i < INVEN_WIELD) && (f5 & TR5_WIELD_CAST))
+		if ((wield_slot(o_ptr) != -1) && (i < INVEN_WIELD) && (flags & TR_WIELD_CAST))
 		{
 			continue;
 		}
@@ -1999,7 +1879,7 @@ boost::optional<int> get_item_hook_find_spell(object_filter_t const &)
 		if (!is_school_book()(o_ptr))
 		{
 			/* Does it contain the appropriate spell? */
-			if ((f5 & TR5_SPELL_CONTAIN) && (o_ptr->pval2 == spell))
+			if ((flags & TR_SPELL_CONTAIN) && (o_ptr->pval2 == spell))
 			{
 				hack_force_spell = spell;
 				hack_force_spell_pval = o_ptr->pval;
@@ -2059,7 +1939,6 @@ s32b get_school_spell(cptr do_what, s16b force_book)
 	object_type *o_ptr, forge;
 	int tmp;
 	int sval, pval;
-	u32b f1, f2, f3, f4, f5, esp;
 
 	hack_force_spell = -1;
 	hack_force_spell_pval = -1;
@@ -2085,10 +1964,10 @@ s32b get_school_spell(cptr do_what, s16b force_book)
 		/* Get the item */
 		o_ptr = get_object(item);
 
-		object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
+		auto const f = object_flags(o_ptr);
 
 		/* If it can be wielded, it must */
-		if ((wield_slot(o_ptr) != -1) && (item < INVEN_WIELD) && (f5 & TR5_WIELD_CAST))
+		if ((wield_slot(o_ptr) != -1) && (item < INVEN_WIELD) && (f & TR_WIELD_CAST))
 		{
 			msg_format("You cannot %s from that object; it must be wielded first.", do_what);
 			return -1;
@@ -2276,10 +2155,9 @@ void cast_school_spell()
 /* Can it contains a schooled spell ? */
 static bool hook_school_can_spellable(object_type const *o_ptr)
 {
-	u32b f1, f2, f3, f4, f5, esp;
-	object_flags(o_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
+	auto const f = object_flags(o_ptr);
 
-	return ((f5 & TR5_SPELL_CONTAIN) && (o_ptr->pval2 == -1));
+	return ((f & TR_SPELL_CONTAIN) && (o_ptr->pval2 == -1));
 }
 
 /*

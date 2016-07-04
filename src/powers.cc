@@ -14,6 +14,7 @@
 #include "cmd2.hpp"
 #include "cmd7.hpp"
 #include "dungeon_flag.hpp"
+#include "feature_flag.hpp"
 #include "feature_type.hpp"
 #include "files.hpp"
 #include "hooks.hpp"
@@ -21,6 +22,7 @@
 #include "monster2.hpp"
 #include "monster3.hpp"
 #include "monster_race.hpp"
+#include "monster_race_flag.hpp"
 #include "monster_type.hpp"
 #include "object1.hpp"
 #include "object2.hpp"
@@ -561,7 +563,7 @@ static void power_activate(int power)
 				m_ptr = &m_list[c_ptr->m_idx];
 				auto const r_ptr = m_ptr->race();
 
-				if ((r_ptr->flags1 & RF1_NEVER_MOVE) && (m_ptr->status == MSTATUS_PET) && (!(r_ptr->flags9 & RF9_SPECIAL_GENE)))
+				if ((r_ptr->flags & RF_NEVER_MOVE) && (m_ptr->status == MSTATUS_PET) && (!(r_ptr->flags & RF_SPECIAL_GENE)))
 				{
 					q_ptr = &forge;
 					object_prep(q_ptr, lookup_kind(TV_HYPNOS, 1));
@@ -721,7 +723,7 @@ static void power_activate(int power)
 				msg_print("You bite into thin air!");
 				break;
 			}
-			else if ((f_info[c_ptr->feat].flags1 & FF1_PERMANENT) || (c_ptr->feat == FEAT_MOUNTAIN))
+			else if ((f_info[c_ptr->feat].flags & FF_PERMANENT) || (c_ptr->feat == FEAT_MOUNTAIN))
 			{
 				msg_print("Ouch!  This wall is harder than your teeth!");
 				break;
@@ -1001,7 +1003,7 @@ static void power_activate(int power)
 			monster_type *m_ptr = &m_list[c_ptr->m_idx];
 			auto const r_ptr = m_ptr->race();
 
-			if (r_ptr->flags3 & RF3_EVIL)
+			if (r_ptr->flags & RF_EVIL)
 			{
 				/* Delete the monster, rather than killing it. */
 				delete_monster_idx(c_ptr->m_idx);

@@ -15,10 +15,13 @@
 #include "messages.hpp"
 #include "monster2.hpp"
 #include "monster3.hpp"
-#include "monster_type.hpp"
 #include "monster_race.hpp"
+#include "monster_race_flag.hpp"
+#include "monster_spell_flag.hpp"
+#include "monster_type.hpp"
 #include "object1.hpp"
 #include "object2.hpp"
+#include "object_flag.hpp"
 #include "object_kind.hpp"
 #include "object_type.hpp"
 #include "player_type.hpp"
@@ -111,23 +114,23 @@ void initialize_random_quests(int n)
 			r_ptr = &r_info[q_ptr->r_idx];
 
 			/* Accept only monsters that can be generated */
-			if (r_ptr->flags9 & RF9_SPECIAL_GENE) continue;
-			if (r_ptr->flags9 & RF9_NEVER_GENE) continue;
+			if (r_ptr->flags & RF_SPECIAL_GENE) continue;
+			if (r_ptr->flags & RF_NEVER_GENE) continue;
 
 			/* Accept only monsters that are not breeders */
-			if (r_ptr->flags4 & RF4_MULTIPLY) continue;
+			if (r_ptr->spells & SF_MULTIPLY) continue;
 
 			/* Forbid joke monsters */
-			if (r_ptr->flags8 & RF8_JOKEANGBAND) continue;
+			if (r_ptr->flags & RF_JOKEANGBAND) continue;
 
 			/* Accept only monsters that are not friends */
-			if (r_ptr->flags7 & RF7_PET) continue;
+			if (r_ptr->flags & RF_PET) continue;
 
 			/* Refuse nazguls */
-			if (r_ptr->flags7 & RF7_NAZGUL) continue;
+			if (r_ptr->flags & RF_NAZGUL) continue;
 
 			/* Accept only monsters that are not good */
-			if (r_ptr->flags3 & RF3_GOOD) continue;
+			if (r_ptr->flags & RF_GOOD) continue;
 
 			/* If module says a monster race is friendly, then skip */
 			if (modules[game_module_idx].race_status != NULL)
@@ -150,11 +153,11 @@ void initialize_random_quests(int n)
 			if (!ok) continue;
 
 			/* No mutliple uniques */
-			if ((r_ptr->flags1 & RF1_UNIQUE) &&
+			if ((r_ptr->flags & RF_UNIQUE) &&
 			                ((q_ptr->type != 1) || (r_ptr->max_num == -1))) continue;
 
 			/* No single non uniques */
-			if ((!(r_ptr->flags1 & RF1_UNIQUE)) && (q_ptr->type == 1)) continue;
+			if ((!(r_ptr->flags & RF_UNIQUE)) && (q_ptr->type == 1)) continue;
 
 			/* Level restriction */
 			min_level = (rl > RQ_LEVEL_CAP) ? RQ_LEVEL_CAP : rl;
@@ -174,7 +177,7 @@ void initialize_random_quests(int n)
 		}
 		else
 		{
-			if (r_ptr->flags1 & RF1_UNIQUE)
+			if (r_ptr->flags & RF_UNIQUE)
 			{
 				r_ptr->max_num = -1;
 			}
@@ -213,7 +216,6 @@ bool_ is_randhero(int level)
 
 static void do_get_new_obj(int y, int x)
 {
-	obj_theme theme;
 	object_type *q_ptr[3], forge[3];
 	int res, i;
 
@@ -227,14 +229,8 @@ static void do_get_new_obj(int y, int x)
 		/* Wipe the object */
 		object_wipe(q_ptr[i]);
 
-		/* No themes */
-		theme.treasure = 100;
-		theme.combat = 100;
-		theme.magic = 100;
-		theme.tools = 100;
-
 		/* Make a great object */
-		make_object(q_ptr[i], TRUE, TRUE, theme);
+		make_object(q_ptr[i], TRUE, TRUE, obj_theme::no_theme());
 		q_ptr[i]->found = OBJ_FOUND_REWARD;
 
 		char buf[100];
@@ -271,7 +267,7 @@ static void do_get_new_obj(int y, int x)
 			{
 				random_artifacts[o_ptr->sval].generated = FALSE;
 			}
-			else if (k_info[o_ptr->k_idx].flags3 & TR3_NORM_ART)
+			else if (k_info[o_ptr->k_idx].flags & TR_NORM_ART)
 			{
 				k_info[o_ptr->k_idx].artifact = FALSE;
 			}

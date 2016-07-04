@@ -20,10 +20,12 @@
 #include "messages.hpp"
 #include "monster2.hpp"
 #include "monster_race.hpp"
+#include "monster_race_flag.hpp"
 #include "monster_type.hpp"
 #include "notes.hpp"
 #include "object1.hpp"
 #include "object2.hpp"
+#include "object_flag.hpp"
 #include "object_kind.hpp"
 #include "player_type.hpp"
 #include "skills.hpp"
@@ -625,7 +627,6 @@ static option_type cheat_info[6] =
 	{ &cheat_hear, FALSE, 0, 1, "cheat_hear", "Peek into monster creation" },
 	{ &cheat_room, FALSE, 0, 2, "cheat_room", "Peek into dungeon creation" },
 	{ &cheat_xtra, FALSE, 0, 3, "cheat_xtra", "Peek into something else" },
-	{ &cheat_know, FALSE, 0, 4, "cheat_know", "Know complete monster info" },
 	{ &cheat_live, FALSE, 0, 5, "cheat_live", "Allow player to avoid death" }
 };
 
@@ -3046,7 +3047,7 @@ void do_cmd_knowledge_artifacts(void)
 		okayk[k] = FALSE;
 
 		/* Skip "empty" artifacts */
-		if (!(k_ptr->flags3 & TR3_NORM_ART)) continue;
+		if (!(k_ptr->flags & TR_NORM_ART)) continue;
 
 		/* Skip "uncreated" artifacts */
 		if (!k_ptr->artifact) continue;
@@ -3078,7 +3079,7 @@ void do_cmd_knowledge_artifacts(void)
 				if (object_known_p(o_ptr)) continue;
 
 				/* Note the artifact */
-				if (k_info[o_ptr->k_idx].flags3 & TR3_NORM_ART)
+				if (k_info[o_ptr->k_idx].flags & TR_NORM_ART)
 				{
 					okayk[o_ptr->k_idx] = FALSE;
 				}
@@ -3111,7 +3112,7 @@ void do_cmd_knowledge_artifacts(void)
 			if (object_known_p(o_ptr)) continue;
 
 			/* Note the artifact */
-			if (k_info[o_ptr->k_idx].flags3 & TR3_NORM_ART)
+			if (k_info[o_ptr->k_idx].flags & TR_NORM_ART)
 			{
 				okayk[o_ptr->k_idx] = FALSE;
 			}
@@ -3140,7 +3141,7 @@ void do_cmd_knowledge_artifacts(void)
 		if (object_known_p(o_ptr)) continue;
 
 		/* Note the artifact */
-		if (k_info[o_ptr->k_idx].flags3 & TR3_NORM_ART)
+		if (k_info[o_ptr->k_idx].flags & TR_NORM_ART)
 		{
 			okayk[o_ptr->k_idx] = FALSE;
 		}
@@ -3172,7 +3173,6 @@ void do_cmd_knowledge_artifacts(void)
 		{
 			object_type forge;
 			object_type *q_ptr;
-			u32b f1, f2, f3, f4, f5, esp;
 
 			/* Get local object */
 			q_ptr = &forge;
@@ -3184,9 +3184,11 @@ void do_cmd_knowledge_artifacts(void)
 			q_ptr->name1 = k;
 
 			/* Spell in it ? no ! */
-			object_flags(q_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
-			if (f5 & TR5_SPELL_CONTAIN)
+			auto const flags = object_flags(q_ptr);
+			if (flags & TR_SPELL_CONTAIN)
+			{
 				q_ptr->pval2 = -1;
+			}
 
 			/* Describe the artifact */
 			object_desc_store(base_name, q_ptr, FALSE, 0);
@@ -3277,9 +3279,9 @@ static void do_cmd_knowledge_uniques(void)
 		monster_race *r_ptr = &r_info[k];
 
 		/* Only print Uniques */
-		if (r_ptr->flags1 & (RF1_UNIQUE) &&
-		    !(r_ptr->flags7 & RF7_PET) &&
-		    !(r_ptr->flags7 & RF7_NEUTRAL))
+		if ((r_ptr->flags & RF_UNIQUE) &&
+		    !(r_ptr->flags & RF_PET) &&
+		    !(r_ptr->flags & RF_NEUTRAL))
 		{
 			unique_r_idxs.push_back(k);
 		}
@@ -3299,28 +3301,24 @@ static void do_cmd_knowledge_uniques(void)
 		monster_race *r_ptr = &r_info[r_idx];
 
 		/* Only print Uniques */
-		if (r_ptr->flags1 & (RF1_UNIQUE))
+		if (r_ptr->flags & RF_UNIQUE)
 		{
 			bool_ dead = (r_ptr->max_num == 0);
 
-			/* Only display "known" uniques */
-			if (dead || cheat_know || r_ptr->r_sights)
+			/* Print a message */
+			if (dead)
 			{
-				/* Print a message */
-				if (dead)
-				{
-					w.write("[[[[[{}{}] [[[[[R{:<68} is dead]\n",
-						static_cast<char>(conv_color[r_ptr->d_attr]),
-						static_cast<char>(r_ptr->d_char),
-						r_ptr->name);
-				}
-				else
-				{
-					w.write("[[[[[{}{}] [[[[[w{:<68} is alive]\n",
-						static_cast<char>(conv_color[r_ptr->d_attr]),
-						static_cast<char>(r_ptr->d_char),
-						r_ptr->name);
-				}
+				w.write("[[[[[{}{}] [[[[[R{:<68} is dead]\n",
+					static_cast<char>(conv_color[r_ptr->d_attr]),
+					static_cast<char>(r_ptr->d_char),
+					r_ptr->name);
+			}
+			else
+			{
+				w.write("[[[[[{}{}] [[[[[w{:<68} is alive]\n",
+					static_cast<char>(conv_color[r_ptr->d_attr]),
+					static_cast<char>(r_ptr->d_char),
+					r_ptr->name);
 			}
 		}
 	}
@@ -3451,7 +3449,7 @@ static void do_cmd_knowledge_pets(void)
 			monster_desc(pet_name, m_ptr, 0x88);
 
 			w.write("{}{} ({})\n",
-				(r_ptr->flags1 & RF1_UNIQUE) ? "#####G" : "",
+				(r_ptr->flags & RF_UNIQUE) ? "#####G" : "",
 				pet_name,
 				(m_ptr->status < MSTATUS_COMPANION) ? "pet" : "companion");
 		}
@@ -3497,7 +3495,7 @@ static void do_cmd_knowledge_kill_count(void)
 		{
 			monster_race *r_ptr = &r_info[kk];
 
-			if (r_ptr->flags1 & (RF1_UNIQUE))
+			if (r_ptr->flags & RF_UNIQUE)
 			{
 				if (r_ptr->max_num == 0)
 				{
@@ -3531,7 +3529,7 @@ static void do_cmd_knowledge_kill_count(void)
 	{
 		monster_race *r_ptr = &r_info[k];
 
-		if (r_ptr->flags1 & (RF1_UNIQUE))
+		if (r_ptr->flags & RF_UNIQUE)
 		{
 			bool_ dead = (r_ptr->max_num == 0);
 
@@ -3593,7 +3591,7 @@ static void do_cmd_knowledge_objects(void)
 		object_kind *k_ptr = &k_info[k];
 
 		/* Hack -- skip artifacts */
-		if (k_ptr->flags3 & (TR3_INSTA_ART)) continue;
+		if (k_ptr->flags & (TR_INSTA_ART)) continue;
 
 		/* List known flavored objects */
 		if (k_ptr->flavor && k_ptr->aware)

@@ -6,7 +6,9 @@
 #include "cave_type.hpp"
 #include "dungeon_info_type.hpp"
 #include "dungeon_flag.hpp"
+#include "ego_flag.hpp"
 #include "ego_item_type.hpp"
+#include "feature_flag.hpp"
 #include "feature_type.hpp"
 #include "files.hpp"
 #include "gods.hpp"
@@ -16,22 +18,29 @@
 #include "monster2.hpp"
 #include "monster_ego.hpp"
 #include "monster_race.hpp"
+#include "monster_race_flag.hpp"
+#include "monster_spell.hpp"
 #include "monster_type.hpp"
 #include "object1.hpp"
 #include "object2.hpp"
+#include "object_flag.hpp"
+#include "object_flag_meta.hpp"
 #include "object_kind.hpp"
 #include "owner_type.hpp"
 #include "player_class.hpp"
 #include "player_race.hpp"
+#include "player_race_flag.hpp"
 #include "player_race_mod.hpp"
 #include "player_type.hpp"
 #include "randart_gen_type.hpp"
 #include "randart_part_type.hpp"
 #include "set_type.hpp"
+#include "skill_flag.hpp"
 #include "skill_type.hpp"
 #include "skills.hpp"
 #include "spells5.hpp"
 #include "store_action_type.hpp"
+#include "store_flag.hpp"
 #include "store_info_type.hpp"
 #include "store_type.hpp"
 #include "tables.hpp"
@@ -152,711 +161,6 @@ static cptr r_info_blow_effect[] =
 
 
 /*
- * Monster race flags
- */
-static cptr r_info_flags1[] =
-{
-	"UNIQUE",
-	"QUESTOR",
-	"MALE",
-	"FEMALE",
-	"CHAR_CLEAR",
-	"CHAR_MULTI",
-	"ATTR_CLEAR",
-	"ATTR_MULTI",
-	"FORCE_DEPTH",
-	"FORCE_MAXHP",
-	"FORCE_SLEEP",
-	"FORCE_EXTRA",
-	"FRIEND",
-	"FRIENDS",
-	"ESCORT",
-	"ESCORTS",
-	"NEVER_BLOW",
-	"NEVER_MOVE",
-	"RAND_25",
-	"RAND_50",
-	"ONLY_GOLD",
-	"ONLY_ITEM",
-	"DROP_60",
-	"DROP_90",
-	"DROP_1D2",
-	"DROP_2D2",
-	"DROP_3D2",
-	"DROP_4D2",
-	"DROP_GOOD",
-	"DROP_GREAT",
-	"DROP_USEFUL",
-	"DROP_CHOSEN"
-};
-
-/*
- * Monster race flags
- */
-static cptr r_info_flags2[] =
-{
-	"STUPID",
-	"SMART",
-	"CAN_SPEAK",
-	"REFLECTING",
-	"INVISIBLE",
-	"COLD_BLOOD",
-	"EMPTY_MIND",
-	"WEIRD_MIND",
-	"DEATH_ORB",
-	"REGENERATE",
-	"SHAPECHANGER",
-	"ATTR_ANY",
-	"POWERFUL",
-	"ELDRITCH_HORROR",
-	"AURA_FIRE",
-	"AURA_ELEC",
-	"OPEN_DOOR",
-	"BASH_DOOR",
-	"PASS_WALL",
-	"KILL_WALL",
-	"MOVE_BODY",
-	"KILL_BODY",
-	"TAKE_ITEM",
-	"KILL_ITEM",
-	"BRAIN_1",
-	"BRAIN_2",
-	"BRAIN_3",
-	"BRAIN_4",
-	"BRAIN_5",
-	"BRAIN_6",
-	"BRAIN_7",
-	"BRAIN_8"
-};
-
-/*
- * Monster race flags
- */
-static cptr r_info_flags3[] =
-{
-	"ORC",
-	"TROLL",
-	"GIANT",
-	"DRAGON",
-	"DEMON",
-	"UNDEAD",
-	"EVIL",
-	"ANIMAL",
-	"THUNDERLORD",
-	"GOOD",
-	"AURA_COLD",  /* TODO: Implement aura_cold */
-	"NONLIVING",
-	"HURT_LITE",
-	"HURT_ROCK",
-	"SUSCEP_FIRE",
-	"SUSCEP_COLD",
-	"IM_ACID",
-	"IM_ELEC",
-	"IM_FIRE",
-	"IM_COLD",
-	"IM_POIS",
-	"RES_TELE",
-	"RES_NETH",
-	"RES_WATE",
-	"RES_PLAS",
-	"RES_NEXU",
-	"RES_DISE",
-	"UNIQUE_4",
-	"NO_FEAR",
-	"NO_STUN",
-	"NO_CONF",
-	"NO_SLEEP"
-};
-
-/*
- * Monster race flags
- */
-static cptr r_info_flags4[] =
-{
-	"SHRIEK",
-	"MULTIPLY",
-	"S_ANIMAL",
-	"ROCKET",
-	"ARROW_1",
-	"ARROW_2",
-	"ARROW_3",
-	"ARROW_4",
-	"BR_ACID",
-	"BR_ELEC",
-	"BR_FIRE",
-	"BR_COLD",
-	"BR_POIS",
-	"BR_NETH",
-	"BR_LITE",
-	"BR_DARK",
-	"BR_CONF",
-	"BR_SOUN",
-	"BR_CHAO",
-	"BR_DISE",
-	"BR_NEXU",
-	"BR_TIME",
-	"BR_INER",
-	"BR_GRAV",
-	"BR_SHAR",
-	"BR_PLAS",
-	"BR_WALL",
-	"BR_MANA",
-	"BA_NUKE",
-	"BR_NUKE",
-	"BA_CHAO",
-	"BR_DISI",
-};
-
-/*
- * Monster race flags
- */
-static cptr r_info_flags5[] =
-{
-	"BA_ACID",
-	"BA_ELEC",
-	"BA_FIRE",
-	"BA_COLD",
-	"BA_POIS",
-	"BA_NETH",
-	"BA_WATE",
-	"BA_MANA",
-	"BA_DARK",
-	"DRAIN_MANA",
-	"MIND_BLAST",
-	"BRAIN_SMASH",
-	"CAUSE_1",
-	"CAUSE_2",
-	"CAUSE_3",
-	"CAUSE_4",
-	"BO_ACID",
-	"BO_ELEC",
-	"BO_FIRE",
-	"BO_COLD",
-	"BO_POIS",
-	"BO_NETH",
-	"BO_WATE",
-	"BO_MANA",
-	"BO_PLAS",
-	"BO_ICEE",
-	"MISSILE",
-	"SCARE",
-	"BLIND",
-	"CONF",
-	"SLOW",
-	"HOLD"
-};
-
-/*
- * Monster race flags
- */
-static cptr r_info_flags6[] =
-{
-	"HASTE",
-	"HAND_DOOM",
-	"HEAL",
-	"S_ANIMALS",
-	"BLINK",
-	"TPORT",
-	"TELE_TO",
-	"TELE_AWAY",
-	"TELE_LEVEL",
-	"DARKNESS",
-	"TRAPS",
-	"FORGET",
-	"ANIM_DEAD",  /* ToDo: Implement ANIM_DEAD */
-	"S_BUG",
-	"S_RNG",
-	"S_THUNDERLORD",   /* DG : Summon Thunderlord */
-	"S_KIN",
-	"S_HI_DEMON",
-	"S_MONSTER",
-	"S_MONSTERS",
-	"S_ANT",
-	"S_SPIDER",
-	"S_HOUND",
-	"S_HYDRA",
-	"S_ANGEL",
-	"S_DEMON",
-	"S_UNDEAD",
-	"S_DRAGON",
-	"S_HI_UNDEAD",
-	"S_HI_DRAGON",
-	"S_WRAITH",
-	"S_UNIQUE"
-};
-
-
-/*
- * Monster race flags
- */
-static cptr r_info_flags7[] =
-{
-	"AQUATIC",
-	"CAN_SWIM",
-	"CAN_FLY",
-	"FRIENDLY",
-	"PET",
-	"MORTAL",
-	"SPIDER",
-	"NAZGUL",
-	"DG_CURSE",
-	"POSSESSOR",
-	"NO_DEATH",
-	"NO_TARGET",
-	"AI_ANNOY",
-	"AI_SPECIAL",
-	"NEUTRAL",
-	"DROP_ART",
-	"DROP_RANDART",
-	"AI_PLAYER",
-	"NO_THEFT",
-	"SPIRIT",
-	"XXX7X20",
-	"XXX7X21",
-	"XXX7X22",
-	"XXX7X23",
-	"XXX7X24",
-	"XXX7X25",
-	"XXX7X26",
-	"XXX7X27",
-	"XXX7X28",
-	"XXX7X29",
-	"XXX7X30",
-	"XXX7X31",
-};
-
-/*
- * Monster race flags
- */
-static cptr r_info_flags8[] =
-{
-	"WILD_ONLY",
-	"WILD_TOWN",
-	"XXX8X02",
-	"WILD_SHORE",
-	"WILD_OCEAN",
-	"WILD_WASTE",
-	"WILD_WOOD",
-	"WILD_VOLCANO",
-	"XXX8X08",
-	"WILD_MOUNTAIN",
-	"WILD_GRASS",
-	"NO_CUT",
-	"CTHANGBAND",
-	"XXX8X13",
-	"ZANGBAND",
-	"JOKEANGBAND",
-	"BASEANGBAND",
-	"XXX8X17",
-	"XXX8X18",
-	"XXX8X19",
-	"XXX8X20",
-	"XXX8X21",
-	"XXX8X22",
-	"XXX8X23",
-	"XXX8X24",
-	"XXX8X25",
-	"XXX8X26",
-	"XXX8X27",
-	"XXX8X28",
-	"XXX8X29",
-	"WILD_SWAMP", 	/* ToDo: Implement Swamp */
-	"WILD_TOO",
-};
-
-
-/*
- * Monster race flags - Drops
- */
-static cptr r_info_flags9[] =
-{
-	"DROP_CORPSE",
-	"DROP_SKELETON",
-	"HAS_LITE",
-	"MIMIC",
-	"HAS_EGG",
-	"IMPRESED",
-	"SUSCEP_ACID",
-	"SUSCEP_ELEC",
-	"SUSCEP_POIS",
-	"KILL_TREES",
-	"WYRM_PROTECT",
-	"DOPPLEGANGER",
-	"ONLY_DEPTH",
-	"SPECIAL_GENE",
-	"NEVER_GENE",
-	"XXX9X15",
-	"XXX9X16",
-	"XXX9X17",
-	"XXX9X18",
-	"XXX9X19",
-	"XXX9X20",
-	"XXX9X21",
-	"XXX9X22",
-	"XXX9X23",
-	"XXX9X24",
-	"XXX9X25",
-	"XXX9X26",
-	"XXX9X27",
-	"XXX9X28",
-	"XXX9X29",
-	"XXX9X30",
-	"XXX9X31",
-};
-
-
-/*
- * Object flags
- */
-static cptr k_info_flags1[] =
-{
-	"STR",
-	"INT",
-	"WIS",
-	"DEX",
-	"CON",
-	"CHR",
-	"MANA",
-	"SPELL",
-	"STEALTH",
-	"SEARCH",
-	"INFRA",
-	"TUNNEL",
-	"SPEED",
-	"BLOWS",
-	"CHAOTIC",
-	"VAMPIRIC",
-	"SLAY_ANIMAL",
-	"SLAY_EVIL",
-	"SLAY_UNDEAD",
-	"SLAY_DEMON",
-	"SLAY_ORC",
-	"SLAY_TROLL",
-	"SLAY_GIANT",
-	"SLAY_DRAGON",
-	"KILL_DRAGON",
-	"VORPAL",
-	"IMPACT",
-	"BRAND_POIS",
-	"BRAND_ACID",
-	"BRAND_ELEC",
-	"BRAND_FIRE",
-	"BRAND_COLD"
-};
-
-/*
- * Object flags
- */
-static cptr k_info_flags2[] =
-{
-	"SUST_STR",
-	"SUST_INT",
-	"SUST_WIS",
-	"SUST_DEX",
-	"SUST_CON",
-	"SUST_CHR",
-	"INVIS",
-	"LIFE",
-	"IM_ACID",
-	"IM_ELEC",
-	"IM_FIRE",
-	"IM_COLD",
-	"SENS_FIRE",
-	"REFLECT",
-	"FREE_ACT",
-	"HOLD_LIFE",
-	"RES_ACID",
-	"RES_ELEC",
-	"RES_FIRE",
-	"RES_COLD",
-	"RES_POIS",
-	"RES_FEAR",
-	"RES_LITE",
-	"RES_DARK",
-	"RES_BLIND",
-	"RES_CONF",
-	"RES_SOUND",
-	"RES_SHARDS",
-	"RES_NETHER",
-	"RES_NEXUS",
-	"RES_CHAOS",
-	"RES_DISEN"
-};
-
-/*
- * Trap flags
- */
-static cptr k_info_flags2_trap[] =
-{
-	"AUTOMATIC_5",
-	"AUTOMATIC_99",
-	"KILL_GHOST",
-	"TELEPORT_TO",
-	"ONLY_DRAGON",
-	"ONLY_DEMON",
-	"XXX3",
-	"XXX3",
-	"ONLY_ANIMAL",
-	"ONLY_UNDEAD",
-	"ONLY_EVIL",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-	"XXX3",
-};
-
-
-/*
- * Object flags
- */
-static cptr k_info_flags3[] =
-{
-	"SH_FIRE",
-	"SH_ELEC",
-	"AUTO_CURSE",
-	"DECAY",
-	"NO_TELE",
-	"NO_MAGIC",
-	"WRAITH",
-	"TY_CURSE",
-	"EASY_KNOW",
-	"HIDE_TYPE",
-	"SHOW_MODS",
-	"INSTA_ART",
-	"FEATHER",
-	"LITE1",
-	"SEE_INVIS",
-	"NORM_ART",
-	"SLOW_DIGEST",
-	"REGEN",
-	"XTRA_MIGHT",
-	"XTRA_SHOTS",
-	"IGNORE_ACID",
-	"IGNORE_ELEC",
-	"IGNORE_FIRE",
-	"IGNORE_COLD",
-	"ACTIVATE",
-	"DRAIN_EXP",
-	"TELEPORT",
-	"AGGRAVATE",
-	"BLESSED",
-	"CURSED",
-	"HEAVY_CURSE",
-	"PERMA_CURSE"
-};
-
-/*
- * Object flags
- */
-static cptr k_info_flags4[] =
-{
-	"NEVER_BLOW",
-	"PRECOGNITION",
-	"BLACK_BREATH",
-	"RECHARGE",
-	"FLY",
-	"DG_CURSE",
-	"COULD2H",
-	"MUST2H",
-	"LEVELS",
-	"CLONE",
-	"SPECIAL_GENE",
-	"CLIMB",
-	"FAST_CAST",
-	"CAPACITY",
-	"CHARGING",
-	"CHEAPNESS",
-	"FOUNTAIN",
-	"ANTIMAGIC_50",
-	"XXX5",
-	"XXX5",
-	"XXX5",
-	"EASY_USE",
-	"IM_NETHER",
-	"RECHARGED",
-	"ULTIMATE",
-	"AUTO_ID",
-	"LITE2",
-	"LITE3",
-	"FUEL_LITE",
-	"XXX5",
-	"CURSE_NO_DROP",
-	"NO_RECHARGE"
-};
-
-/*
- * Object flags
- */
-static cptr k_info_flags5[] =
-{
-	"TEMPORARY",
-	"DRAIN_MANA",
-	"DRAIN_HP",
-	"KILL_DEMON",
-	"KILL_UNDEAD",
-	"CRIT",
-	"ATTR_MULTI",
-	"WOUNDING",
-	"FULL_NAME",
-	"LUCK",
-	"IMMOVABLE",
-	"SPELL_CONTAIN",
-	"RES_MORGUL",
-	"ACTIVATE_NO_WIELD",
-	"MAGIC_BREATH",
-	"WATER_BREATH",
-	"WIELD_CAST",
-	"RANDOM_RESIST",
-	"RANDOM_POWER",
-	"RANDOM_RES_OR_POWER",
-	"XXX8X20",
-	"XXX8X21",
-	"XXX8X22",
-	"XXX8X23",
-	"XXX8X24",
-	"XXX8X25",
-	"XXX8X26",
-	"XXX8X27",
-	"XXX8X28",
-	"XXX8X29",
-	"XXX8X02",
-	"XXX8X22",
-};
-
-/*
- * ESP flags
- */
-static cptr esp_flags[] =
-{
-	"ESP_ORC",
-	"ESP_TROLL",
-	"ESP_DRAGON",
-	"ESP_GIANT",
-	"ESP_DEMON",
-	"ESP_UNDEAD",
-	"ESP_EVIL",
-	"ESP_ANIMAL",
-	"ESP_THUNDERLORD",
-	"ESP_GOOD",
-	"ESP_NONLIVING",
-	"ESP_UNIQUE",
-	"ESP_SPIDER",
-	"XXX8X02",
-	"XXX8X02",
-	"XXX8X02",
-	"XXX8X02",
-	"XXX8X17",
-	"XXX8X18",
-	"XXX8X19",
-	"XXX8X20",
-	"XXX8X21",
-	"XXX8X22",
-	"XXX8X23",
-	"XXX8X24",
-	"XXX8X25",
-	"XXX8X26",
-	"XXX8X27",
-	"XXX8X28",
-	"XXX8X29",
-	"XXX8X02",
-	"ESP_ALL",
-};
-
-/* Specially handled properties for ego-items */
-
-static cptr ego_flags[] =
-{
-	"SUSTAIN",
-	"OLD_RESIST",
-	"ABILITY",
-	"R_ELEM",
-	"R_LOW",
-	"R_HIGH",
-	"R_ANY",
-	"R_DRAGON",
-	"SLAY_WEAP",
-	"DAM_DIE",
-	"DAM_SIZE",
-	"PVAL_M1",
-	"PVAL_M2",
-	"PVAL_M3",
-	"PVAL_M5",
-	"AC_M1",
-	"AC_M2",
-	"AC_M3",
-	"AC_M5",
-	"TH_M1",
-	"TH_M2",
-	"TH_M3",
-	"TH_M5",
-	"TD_M1",
-	"TD_M2",
-	"TD_M3",
-	"TD_M5",
-	"R_P_ABILITY",
-	"R_STAT",
-	"R_STAT_SUST",
-	"R_IMMUNITY",
-	"LIMIT_BLOWS"
-};
-
-/*
- * Feature flags
- */
-static cptr f_info_flags1[] =
-{
-	"NO_WALK",
-	"NO_VISION",
-	"CAN_LEVITATE",
-	"CAN_PASS",
-	"FLOOR",
-	"WALL",
-	"PERMANENT",
-	"CAN_FLY",
-	"REMEMBER",
-	"NOTICE",
-	"DONT_NOTICE_RUNNING",
-	"CAN_RUN",
-	"DOOR",
-	"SUPPORT_LIGHT",
-	"CAN_CLIMB",
-	"TUNNELABLE",
-	"WEB",
-	"ATTR_MULTI",
-	"SUPPORT_GROWTH",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1"
-};
-
-/*
  * Trap flags
  */
 static cptr t_info_flags[] =
@@ -893,160 +197,6 @@ static cptr t_info_flags[] =
 	"XXX30",
 	"XXX31",
 	"XXX32"
-};
-
-/*
- * Stores flags
- */
-static cptr st_info_flags1[] =
-{
-	"DEPEND_LEVEL",
-	"SHALLOW_LEVEL",
-	"MEDIUM_LEVEL",
-	"DEEP_LEVEL",
-	"RARE",
-	"VERY_RARE",
-	"COMMON",
-	"ALL_ITEM",
-	"RANDOM",
-	"FORCE_LEVEL",
-	"MUSEUM",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1"
-};
-
-/*
- * Race flags
- */
-static cptr rp_info_flags1[] =
-{
-	"EXPERIMENTAL",
-	"XXX",
-	"RESIST_BLACK_BREATH",
-	"NO_STUN",
-	"XTRA_MIGHT_BOW",
-	"XTRA_MIGHT_XBOW",
-	"XTRA_MIGHT_SLING",
-	"AC_LEVEL",
-	"HURT_LITE",
-	"VAMPIRE",
-	"UNDEAD",
-	"NO_CUT",
-	"CORRUPT",
-	"NO_FOOD",
-	"NO_GOD",
-	"XXX",
-	"ELF",
-	"SEMI_WRAITH",
-	"NO_SUBRACE_CHANGE",
-	"XXX",
-	"XXX",
-	"MOLD_FRIEND",
-	"GOD_FRIEND",
-	"XXX",
-	"INNATE_SPELLS",
-	"XXX",
-	"XXX",
-	"EASE_STEAL",
-	"XXX",
-	"XXX",
-	"XXX",
-	"XXX"
-};
-
-/*
- * Race flags
- */
-static cptr rp_info_flags2[] =
-{
-	"XXX",
-	"ASTRAL",
-	"XXX",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1"
-};
-
-/* Skill flags */
-static cptr s_info_flags1[] =
-{
-	"HIDDEN",
-	"AUTO_HIDE",
-	"RANDOM_GAIN",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1",
-	"XXX1"
 };
 
 
@@ -1542,6 +692,7 @@ static errr grab_one_class_flag(u32b *choice, cptr what)
 	/* Failure */
 	return (1);
 }
+
 static errr grab_one_race_allow_flag(u32b *choice, cptr what)
 {
 	int i;
@@ -1567,12 +718,16 @@ static errr grab_one_race_allow_flag(u32b *choice, cptr what)
 /*
  * Grab one flag from a textual string
  */
-static errr grab_one_skill_flag(u32b *f1, cptr what)
+static errr grab_one_skill_flag(skill_flag_set *flags, cptr what)
 {
-	if (lookup_flags(what, flag_tie(f1, s_info_flags1)))
-	{
-		return 0;
-	}
+#define SKF(tier, index, name) \
+	if (streq(what, #name)) \
+	{ \
+	        *flags |= BOOST_PP_CAT(SKF_,name); \
+	        return 0; \
+        };
+#include "skill_flag_list.hpp"
+#undef SKF
 
 	/* Oops */
 	msg_format("(2)Unknown skill flag '%s'.", what);
@@ -1583,14 +738,16 @@ static errr grab_one_skill_flag(u32b *f1, cptr what)
 /*
  * Grab one flag from a textual string
  */
-static errr grab_one_player_race_flag(u32b *f1, u32b *f2, cptr what)
+static errr grab_one_player_race_flag(player_race_flag_set *flags, cptr what)
 {
-	if (lookup_flags(what,
-		flag_tie(f1, rp_info_flags1),
-		flag_tie(f2, rp_info_flags2)))
-	{
-		return 0;
-	}
+#define PR(tier, index, name) \
+	if (streq(what, #name)) \
+	{ \
+	        *flags |= BOOST_PP_CAT(PR_,name); \
+	        return 0; \
+        };
+#include "player_race_flag_list.hpp"
+#undef PR
 
 	/* Oops */
 	msg_format("(2)Unknown race flag '%s'.", what);
@@ -1616,18 +773,29 @@ static int get_activation(char *activation)
 }
 
 /*
+ * Convert string to object_flag_set value
+ */
+static object_flag_set object_flag_set_from_string(cptr what)
+{
+	for (auto const flag_meta: object_flags_meta())
+	{
+		if (streq(what, flag_meta->e_name))
+		{
+			return flag_meta->flag_set;
+		};
+	}
+
+	return object_flag_set();
+}
+
+/*
  * Grab one flag in an object_kind from a textual string
  */
-static errr grab_one_race_kind_flag(u32b *f1, u32b *f2, u32b *f3, u32b *f4, u32b *f5, u32b *esp, cptr what)
+static errr grab_object_flag(object_flag_set *flags, cptr what)
 {
-	if (lookup_flags(what,
-		flag_tie(f1, k_info_flags1),
-		flag_tie(f2, k_info_flags2),
-		flag_tie(f3, k_info_flags3),
-		flag_tie(f4, k_info_flags4),
-		flag_tie(f5, k_info_flags5),
-		flag_tie(esp, esp_flags)))
+	if (object_flag_set f = object_flag_set_from_string(what))
 	{
+		*flags |= f;
 		return 0;
 	}
 
@@ -1960,7 +1128,7 @@ errr init_player_info_txt(FILE *fp)
 		/* Process 'G' for "Player flags" (multiple lines) */
 		if ((buf[0] == 'R') && (buf[2] == 'G'))
 		{
-			if (0 != grab_one_player_race_flag(&rp_ptr->flags1, &rp_ptr->flags2, buf + 4))
+			if (0 != grab_one_player_race_flag(&rp_ptr->flags, buf + 4))
 			{
 				return (5);
 			}
@@ -1972,7 +1140,7 @@ errr init_player_info_txt(FILE *fp)
 		/* Process 'F' for "level Flags" (multiple lines) */
 		if ((buf[0] == 'R') && (buf[2] == 'F'))
 		{
-			if (0 != grab_one_race_kind_flag(&rp_ptr->oflags1[lev], &rp_ptr->oflags2[lev], &rp_ptr->oflags3[lev], &rp_ptr->oflags4[lev], &rp_ptr->oflags5[lev], &rp_ptr->oesp[lev], buf + 4))
+			if (grab_object_flag(&rp_ptr->oflags[lev], buf + 4))
 			{
 				return (5);
 			}
@@ -2256,7 +1424,7 @@ errr init_player_info_txt(FILE *fp)
 		/* Process 'G' for "Player flags" (multiple lines) */
 		if ((buf[0] == 'S') && (buf[2] == 'G'))
 		{
-			if (0 != grab_one_player_race_flag(&rmp_ptr->flags1, &rmp_ptr->flags2, buf + 4))
+			if (0 != grab_one_player_race_flag(&rmp_ptr->flags, buf + 4))
 			{
 				return (5);
 			}
@@ -2268,7 +1436,7 @@ errr init_player_info_txt(FILE *fp)
 		/* Process 'F' for "level Flags" (multiple lines) */
 		if ((buf[0] == 'S') && (buf[2] == 'F'))
 		{
-			if (0 != grab_one_race_kind_flag(&rmp_ptr->oflags1[lev], &rmp_ptr->oflags2[lev], &rmp_ptr->oflags3[lev], &rmp_ptr->oflags4[lev], &rmp_ptr->oflags5[lev], &rmp_ptr->oesp[lev], buf + 4))
+			if (0 != grab_object_flag(&rmp_ptr->oflags[lev], buf + 4))
 			{
 				return (5);
 			}
@@ -2696,7 +1864,7 @@ errr init_player_info_txt(FILE *fp)
 		/* Process 'G' for "Player flags" (multiple lines) */
 		if ((buf[0] == 'C') && (buf[2] == 'G'))
 		{
-			if (0 != grab_one_player_race_flag(&c_ptr->flags1, &c_ptr->flags2, buf + 4))
+			if (0 != grab_one_player_race_flag(&c_ptr->flags, buf + 4))
 			{
 				return (5);
 			}
@@ -2722,7 +1890,10 @@ errr init_player_info_txt(FILE *fp)
 				}
 
 				/* Parse this entry */
-				if (0 != grab_one_race_kind_flag(&c_ptr->oflags1[lev], &c_ptr->oflags2[lev], &c_ptr->oflags3[lev], &c_ptr->oflags4[lev], &c_ptr->oflags5[lev], &c_ptr->oesp[lev], s)) return (5);
+				if (0 != grab_object_flag(&c_ptr->oflags[lev], s))
+				{
+					return (5);
+				}
 
 				/* Start the next entry */
 				s = t;
@@ -2891,7 +2062,10 @@ errr init_player_info_txt(FILE *fp)
 					}
 
 					/* Parse this entry */
-					if (0 != grab_one_player_race_flag(&s_ptr->flags1, &s_ptr->flags2, s)) return (5);
+					if (0 != grab_one_player_race_flag(&s_ptr->flags, s))
+					{
+						return (5);
+					}
 
 					/* Start the next entry */
 					s = t;
@@ -3149,12 +2323,16 @@ errr init_v_info_txt(FILE *fp)
 /*
  * Grab one flag in an feature_type from a textual string
  */
-static errr grab_one_feature_flag(u32b *f1, cptr what)
+static int grab_one_feature_flag(cptr what, feature_flag_set *flags)
 {
-	if (lookup_flags(what, flag_tie(f1, f_info_flags1)))
-	{
-		return (0);
-	}
+#define FF(tier, index, name) \
+	if (streq(what, #name)) \
+	{ \
+	        *flags |= BOOST_PP_CAT(FF_,name); \
+	        return 0; \
+        };
+#include "feature_flag_list.hpp"
+#undef FF
 
 	/* Oops */
 	msg_format("Unknown feature flag '%s'.", what);
@@ -3392,7 +2570,7 @@ errr init_f_info_txt(FILE *fp)
 		/* Hack -- Process 'F' for flags */
 		if (buf[0] == 'F')
 		{
-			if (0 != grab_one_feature_flag(&f_ptr->flags1, buf + 2))
+			if (0 != grab_one_feature_flag(buf + 2, &f_ptr->flags))
 			{
 				return (5);
 			}
@@ -3409,39 +2587,6 @@ errr init_f_info_txt(FILE *fp)
 	return (0);
 }
 
-
-/*
- * Grab one flag in an object_kind from a textual string
- */
-static errr grab_one_kind_flag(object_kind *k_ptr, cptr what, bool_ obvious)
-{
-	/* Dispatch to correct set of flags */
-	u32b *f1  = obvious ? &k_ptr->oflags1 : &k_ptr->flags1;
-	u32b *f2  = obvious ? &k_ptr->oflags2 : &k_ptr->flags2;
-	u32b *f3  = obvious ? &k_ptr->oflags3 : &k_ptr->flags3;
-	u32b *f4  = obvious ? &k_ptr->oflags4 : &k_ptr->flags4;
-	u32b *f5  = obvious ? &k_ptr->oflags5 : &k_ptr->flags5;
-	u32b *esp = obvious ? &k_ptr->oesp    : &k_ptr->esp;
-
-	/* Lookup */
-	if (lookup_flags(what,
-		flag_tie(f1, k_info_flags1),
-		flag_tie(f2, k_info_flags2),
-		flag_tie(f2, k_info_flags2_trap),
-		flag_tie(f3, k_info_flags3),
-		flag_tie(f4, k_info_flags4),
-		flag_tie(f5, k_info_flags5),
-		flag_tie(esp, esp_flags)))
-	{
-		return 0;
-	}
-
-	/* Oops */
-	msg_format("Unknown object flag '%s'.", what);
-
-	/* Error */
-	return (1);
-}
 
 /*
  * Initialize the "k_info" array, by parsing an ascii "template" file
@@ -3514,7 +2659,6 @@ errr init_k_info_txt(FILE *fp)
 			k_ptr->text = my_strdup("");
 
 			/* Needed hack */
-			k_ptr->esp = 0;
 			k_ptr->power = -1;
 
 			/* Next... */
@@ -3740,7 +2884,7 @@ errr init_k_info_txt(FILE *fp)
 		/* Hack -- Process 'F' for flags */
 		if (buf[0] == 'F')
 		{
-			if (0 != grab_one_kind_flag(k_ptr, buf + 2, FALSE))
+			if (0 != grab_object_flag(&k_ptr->flags, buf + 2))
 			{
 				return (5);
 			}
@@ -3752,7 +2896,7 @@ errr init_k_info_txt(FILE *fp)
 		/* Hack -- Process 'f' for obvious flags */
 		if (buf[0] == 'f')
 		{
-			if (0 != grab_one_kind_flag(k_ptr, buf + 2, TRUE))
+			if (0 != grab_object_flag(&k_ptr->oflags, buf + 2))
 			{
 				return (5);
 			}
@@ -3769,40 +2913,6 @@ errr init_k_info_txt(FILE *fp)
 	/* Success */
 	return (0);
 }
-
-/*
- * Grab one flag in an artifact_type from a textual string
- */
-static errr grab_one_artifact_flag(artifact_type *a_ptr, cptr what, bool_ obvious)
-{
-	/* Dispatch to correct set of flags */
-	u32b *f1  = obvious ? &a_ptr->oflags1 : &a_ptr->flags1;
-	u32b *f2  = obvious ? &a_ptr->oflags2 : &a_ptr->flags2;
-	u32b *f3  = obvious ? &a_ptr->oflags3 : &a_ptr->flags3;
-	u32b *f4  = obvious ? &a_ptr->oflags4 : &a_ptr->flags4;
-	u32b *f5  = obvious ? &a_ptr->oflags5 : &a_ptr->flags5;
-	u32b *esp = obvious ? &a_ptr->oesp    : &a_ptr->esp;
-
-	/* Lookup */
-	if (lookup_flags(what,
-		flag_tie(f1, k_info_flags1),
-		flag_tie(f2, k_info_flags2),
-		flag_tie(f2, k_info_flags2_trap),
-		flag_tie(f3, k_info_flags3),
-		flag_tie(f4, k_info_flags4),
-		flag_tie(f5, k_info_flags5),
-		flag_tie(esp, esp_flags)))
-	{
-		return 0;
-	}
-
-	/* Oops */
-	msg_format("Unknown artifact flag '%s'.", what);
-
-	/* Error */
-	return (1);
-}
-
 
 
 
@@ -3876,17 +2986,16 @@ errr init_a_info_txt(FILE *fp)
 			a_ptr->text = my_strdup("");
 
 			/* Ignore everything */
-			a_ptr->flags3 |= (TR3_IGNORE_ACID);
-			a_ptr->flags3 |= (TR3_IGNORE_ELEC);
-			a_ptr->flags3 |= (TR3_IGNORE_FIRE);
-			a_ptr->flags3 |= (TR3_IGNORE_COLD);
+			a_ptr->flags |= TR_IGNORE_ACID |
+					TR_IGNORE_ELEC |
+					TR_IGNORE_FIRE |
+					TR_IGNORE_COLD;
 
 			/* Needed hack */
-			a_ptr->esp = 0;
 			a_ptr->power = -1;
 
 			/*Require activating artifacts to have a activation type */
-			if (a_ptr && a_ptr->flags3 & TR3_ACTIVATE && !a_ptr->activate)
+			if (a_ptr && (a_ptr->flags & TR_ACTIVATE) && !a_ptr->activate)
 			{
 				msg_print("Activate flag without activate type");
 				return 1;
@@ -4006,7 +3115,10 @@ errr init_a_info_txt(FILE *fp)
 		/* Hack -- Process 'F' for flags */
 		if (buf[0] == 'F')
 		{
-			if (0 != grab_one_artifact_flag(a_ptr, buf+2, FALSE)) return (5);
+			if (grab_object_flag(&a_ptr->flags, buf+2))
+			{
+				return (5);
+			}
 
 			/* Next... */
 			continue;
@@ -4015,7 +3127,10 @@ errr init_a_info_txt(FILE *fp)
 		/* Hack -- Process 'f' for obvious flags */
 		if (buf[0] == 'f')
 		{
-			if (0 != grab_one_artifact_flag(a_ptr, buf+2, TRUE)) return (5);
+			if (grab_object_flag(&a_ptr->oflags, buf+2))
+			{
+				return (5);
+			}
 
 			/* Next... */
 			continue;
@@ -4080,8 +3195,6 @@ errr init_set_info_txt(FILE *fp)
 		/* Process 'N' for "New/Number/Name" */
 		if (buf[0] == 'N')
 		{
-			int z, y;
-
 			/* Find the colon before the name */
 			s = strchr(buf + 2, ':');
 
@@ -4112,25 +3225,6 @@ errr init_set_info_txt(FILE *fp)
 			/* Copy name */
 			assert(!set_ptr->name);
 			set_ptr->name = my_strdup(s);
-
-			/* Initialize */
-			set_ptr->num = 0;
-			set_ptr->num_use = 0;
-			for (z = 0; z < 6; z++)
-			{
-				set_ptr->arts[z].a_idx = 0;
-				set_ptr->arts[z].present = FALSE;
-				for (y = 0; y < 6; y++)
-				{
-					set_ptr->arts[z].flags1[y] = 0;
-					set_ptr->arts[z].flags2[y] = 0;
-					set_ptr->arts[z].flags3[y] = 0;
-					set_ptr->arts[z].flags4[y] = 0;
-					set_ptr->arts[z].flags5[y] = 0;
-					set_ptr->arts[z].esp[y] = 0;
-					set_ptr->arts[z].pval[y] = 0;
-				}
-			}
 
 			/* Next... */
 			continue;
@@ -4185,14 +3279,7 @@ errr init_set_info_txt(FILE *fp)
 		/* Process 'F' for flags */
 		if (buf[0] == 'F')
 		{
-			/* Parse this entry */
-			if (0 != grab_one_race_kind_flag(&set_ptr->arts[cur_art].flags1[cur_num],
-							 &set_ptr->arts[cur_art].flags2[cur_num],
-							 &set_ptr->arts[cur_art].flags3[cur_num],
-							 &set_ptr->arts[cur_art].flags4[cur_num],
-							 &set_ptr->arts[cur_art].flags5[cur_num],
-							 &set_ptr->arts[cur_art].esp[cur_num],
-							 buf + 2))
+			if (grab_object_flag(&set_ptr->arts[cur_art].flags[cur_num], buf + 2))
 			{
 				return (5);
 			}
@@ -4450,24 +3537,6 @@ errr init_s_info_txt(FILE *fp)
 			continue;
 		}
 
-		/* Process 'I' for "Info" (one line only) */
-		if (buf[0] == 'I')
-		{
-			int rate;
-
-			/* Scan for the values */
-			if (1 != sscanf(buf + 2, "%d", &rate))
-			{
-				return (1);
-			}
-
-			/* Save the values */
-			s_ptr->rate = rate;
-
-			/* Next... */
-			continue;
-		}
-
 		/* Process 'G' for "random Gain" (one line only) */
 		if (buf[0] == 'G')
 		{
@@ -4489,7 +3558,7 @@ errr init_s_info_txt(FILE *fp)
 		/* Process 'F' for flags */
 		if (buf[0] == 'F')
 		{
-			if (0 != grab_one_skill_flag(&s_ptr->flags1, buf + 2))
+			if (0 != grab_one_skill_flag(&s_ptr->flags, buf + 2))
 			{
 				return (5);
 			}
@@ -4782,33 +3851,43 @@ errr init_ab_info_txt(FILE *fp)
 
 
 /*
- * Grab one flag in a ego-item_type from a textual string
+ * Look up ego flag
  */
-static bool_ grab_one_ego_item_flag(ego_item_type *e_ptr, cptr what, int n, bool_ obvious)
+static ego_flag_set lookup_ego_flag(const char *what)
 {
-	assert(n < FLAG_RARITY_MAX);
+#define ETR(tier, index, name) \
+	if (streq(what, #name)) \
+	{ \
+	        return BOOST_PP_CAT(ETR_,name); \
+        };
+#include "ego_flag_list.hpp"
+#undef ETR
+	return ego_flag_set();
+}
 
-	/* Dispatch to correct set of flags */
-	u32b *f1  = obvious ? &e_ptr->oflags1[n] : &e_ptr->flags1[n];
-	u32b *f2  = obvious ? &e_ptr->oflags2[n] : &e_ptr->flags2[n];
-	u32b *f3  = obvious ? &e_ptr->oflags3[n] : &e_ptr->flags3[n];
-	u32b *f4  = obvious ? &e_ptr->oflags4[n] : &e_ptr->flags4[n];
-	u32b *f5  = obvious ? &e_ptr->oflags5[n] : &e_ptr->flags5[n];
-	u32b *esp = obvious ? &e_ptr->oesp[n]    : &e_ptr->esp[n];
-	u32b *ego = obvious ? &e_ptr->fego[n]    : &e_ptr->fego[n];
 
-	/* Lookup */
-	if (lookup_flags(what,
-		flag_tie(f1,  k_info_flags1),
-		flag_tie(f2,  k_info_flags2),
-		flag_tie(f2,  k_info_flags2_trap),
-		flag_tie(f3,  k_info_flags3),
-		flag_tie(f4,  k_info_flags4),
-		flag_tie(f5,  k_info_flags5),
-		flag_tie(esp, esp_flags),
-		flag_tie(ego, ego_flags)))
+/*
+ * Grab one flag in a ego-item_type from a textual string.
+ *
+ * We explicitly allow nullptr for the "ego" parameter.
+ */
+static bool_ grab_one_ego_item_flag(object_flag_set *flags, ego_flag_set *ego, cptr what)
+{
+	/* Lookup as an object_flag */
+	if (auto f = object_flag_set_from_string(what))
 	{
-		return (0);
+		*flags |= f;
+		return 0;
+	}
+
+	/* Lookup as ego flag */
+	if (ego)
+	{
+		if (auto f = lookup_ego_flag(what))
+		{
+			*ego |= f;
+			return (0);
+		}
 	}
 
 	/* Oops */
@@ -4818,37 +3897,6 @@ static bool_ grab_one_ego_item_flag(ego_item_type *e_ptr, cptr what, int n, bool
 	return (1);
 }
 
-static bool_ grab_one_ego_item_flag_restrict(ego_item_type *e_ptr, cptr what, bool_ need)
-{
-	/* Dispatch to correct set of flags */
-	u32b *f1  = need ? &e_ptr->need_flags1 : &e_ptr->forbid_flags1;
-	u32b *f2  = need ? &e_ptr->need_flags2 : &e_ptr->forbid_flags2;
-	u32b *f3  = need ? &e_ptr->need_flags3 : &e_ptr->forbid_flags3;
-	u32b *f4  = need ? &e_ptr->need_flags4 : &e_ptr->forbid_flags4;
-	u32b *f5  = need ? &e_ptr->need_flags5 : &e_ptr->forbid_flags5;
-	u32b *esp = need ? &e_ptr->need_esp    : &e_ptr->forbid_esp;
-
-	/* Lookup */
-	if (lookup_flags(what,
-		flag_tie(f1, k_info_flags1),
-		flag_tie(f2, k_info_flags2),
-		flag_tie(f2, k_info_flags2_trap),
-		flag_tie(f3, k_info_flags3),
-		flag_tie(f4, k_info_flags4),
-		flag_tie(f5, k_info_flags5),
-		flag_tie(esp, esp_flags)))
-	{
-		return 0;
-	}
-
-	/* Oops */
-	msg_format("Unknown ego-item restrict flag '%s'.", what);
-
-	/* Error */
-	return (1);
-}
-
-
 
 
 /*
@@ -4856,7 +3904,7 @@ static bool_ grab_one_ego_item_flag_restrict(ego_item_type *e_ptr, cptr what, bo
  */
 errr init_e_info_txt(FILE *fp)
 {
-	int i, cur_r = -1, cur_t = 0, j;
+	int i, cur_r = -1, cur_t = 0;
 	char buf[1024];
 	char *s, *t;
 
@@ -4910,39 +3958,16 @@ errr init_e_info_txt(FILE *fp)
 			/* Save the index */
 			error_idx = i;
 
+			/* Reset cur_* variables */
+			cur_r = -1;
+			cur_t = 0;
+
 			/* Point at the "info" */
 			e_ptr = &e_info[i];
 
 			/* Copy name */
 			assert(!e_ptr->name);
 			e_ptr->name = my_strdup(s);
-
-			/* Needed hack */
-			e_ptr->power = -1;
-			cur_r = -1;
-			cur_t = 0;
-
-			for (j = 0; j < 10; j++)
-			{
-				e_ptr->tval[j] = 255;
-			}
-			for (j = 0; j < FLAG_RARITY_MAX; j++)
-			{
-				e_ptr->rar[j] = 0;
-				e_ptr->flags1[j] = 0;
-				e_ptr->flags2[j] = 0;
-				e_ptr->flags3[j] = 0;
-				e_ptr->flags4[j] = 0;
-				e_ptr->flags5[j] = 0;
-				e_ptr->esp[j] = 0;
-				e_ptr->oflags1[j] = 0;
-				e_ptr->oflags2[j] = 0;
-				e_ptr->oflags3[j] = 0;
-				e_ptr->oflags4[j] = 0;
-				e_ptr->oflags5[j] = 0;
-				e_ptr->oesp[j] = 0;
-				e_ptr->fego[j] = 0;
-			}
 
 			/* Next... */
 			continue;
@@ -5104,7 +4129,10 @@ errr init_e_info_txt(FILE *fp)
 				}
 
 				/* Parse this entry */
-				if (0 != grab_one_ego_item_flag_restrict(e_ptr, s, TRUE)) return (5);
+				if (grab_object_flag(&e_ptr->need_flags, s))
+				{
+					return (5);
+				}
 
 				/* Start the next entry */
 				s = t;
@@ -5117,7 +4145,7 @@ errr init_e_info_txt(FILE *fp)
 		/* Hack -- Process 'r:F' for forbidden flags */
 		if ((buf[0] == 'r') && (buf[2] == 'F'))
 		{
-			if (0 != grab_one_ego_item_flag_restrict(e_ptr, buf + 4, FALSE))
+			if (grab_object_flag(&e_ptr->forbid_flags, buf + 4))
 			{
 				return (5);
 			}
@@ -5145,7 +4173,14 @@ errr init_e_info_txt(FILE *fp)
 				}
 
 				/* Parse this entry */
-				if (0 != grab_one_ego_item_flag(e_ptr, s, cur_r, FALSE)) return (5);
+				assert(cur_r < FLAG_RARITY_MAX);
+				if (0 != grab_one_ego_item_flag(
+				                        &e_ptr->flags[cur_r],
+				                        &e_ptr->fego[cur_r],
+				                        s))
+				{
+					return (5);
+				}
 
 				/* Start the next entry */
 				s = t;
@@ -5174,7 +4209,14 @@ errr init_e_info_txt(FILE *fp)
 				}
 
 				/* Parse this entry */
-				if (0 != grab_one_ego_item_flag(e_ptr, s, cur_r, TRUE)) return (5);
+				assert(cur_r < FLAG_RARITY_MAX);
+				if (0 != grab_one_ego_item_flag(
+				                &e_ptr->oflags[cur_r],
+				                nullptr,
+				                s))
+				{
+					return (5);
+				}
 
 				/* Start the next entry */
 				s = t;
@@ -5191,51 +4233,6 @@ errr init_e_info_txt(FILE *fp)
 	/* Success */
 	return (0);
 }
-
-/*
- * Grab one flag in a randart_part_type from a textual string
- */
-static bool_ grab_one_randart_item_flag(randart_part_type *ra_ptr, cptr what, char c)
-{
-	bool regular = (c == 'F');
-
-	/* Dispatch to correct set of flags */
-	u32b *f1  = regular ? &ra_ptr->flags1 : &ra_ptr->aflags1;
-	u32b *f2  = regular ? &ra_ptr->flags2 : &ra_ptr->aflags2;
-	u32b *f3  = regular ? &ra_ptr->flags3 : &ra_ptr->aflags3;
-	u32b *f4  = regular ? &ra_ptr->flags4 : &ra_ptr->aflags4;
-	u32b *f5  = regular ? &ra_ptr->flags5 : &ra_ptr->aflags5;
-	u32b *esp = regular ? &ra_ptr->esp    : &ra_ptr->aesp;
-
-	/* Check flags */
-	if (lookup_flags(what,
-		flag_tie(f1, k_info_flags1),
-		flag_tie(f2, k_info_flags2),
-		flag_tie(f2, k_info_flags2_trap),
-		flag_tie(f3, k_info_flags3),
-		flag_tie(f4, k_info_flags4),
-		flag_tie(f5, k_info_flags5),
-		flag_tie(esp, esp_flags)))
-	{
-		return 0;
-	}
-
-	/* Check ego_flags */
-	if (regular)
-	{
-		if (lookup_flags(what, flag_tie(&ra_ptr->fego, ego_flags)))
-		{
-			return 0;
-		}
-	}
-
-	/* Oops */
-	msg_format("Unknown ego-item flag '%s'.", what);
-
-	/* Error */
-	return (1);
-}
-
 
 
 
@@ -5317,13 +4314,8 @@ errr init_ra_info_txt(FILE *fp)
 			{
 				ra_ptr->tval[j] = 255;
 			}
-			ra_ptr->flags1 = 0;
-			ra_ptr->flags2 = 0;
-			ra_ptr->flags3 = 0;
-			ra_ptr->flags4 = 0;
-			ra_ptr->flags5 = 0;
-			ra_ptr->esp = 0;
-			ra_ptr->fego = 0;
+			ra_ptr->flags = object_flag_set();
+			ra_ptr->fego = ego_flag_set();
 
 			/* Next... */
 			continue;
@@ -5429,10 +4421,13 @@ errr init_ra_info_txt(FILE *fp)
 			continue;
 		}
 
-		/* Hack -- Process 'F' for flags */
+		/* Process 'F' for flags */
 		if (buf[0] == 'F')
 		{
-			if (0 != grab_one_randart_item_flag(ra_ptr, buf + 2, 'F'))
+			if (0 != grab_one_ego_item_flag(
+			                &ra_ptr->flags,
+			                &ra_ptr->fego,
+			                buf + 2))
 			{
 				return (5);
 			}
@@ -5441,10 +4436,13 @@ errr init_ra_info_txt(FILE *fp)
 			continue;
 		}
 
-		/* Hack -- Process 'A' for antagonic flags */
+		/* Process 'A' for antagonic flags */
 		if (buf[0] == 'A')
 		{
-			if (0 != grab_one_randart_item_flag(ra_ptr, buf + 2, 'A'))
+			if (0 != grab_one_ego_item_flag(
+			                &ra_ptr->aflags,
+			                nullptr,
+			                buf + 2))
 			{
 				return (5);
 			}
@@ -5461,21 +4459,17 @@ errr init_ra_info_txt(FILE *fp)
 	return (0);
 }
 
-/*
- * Grab one (basic) flag in a monster_race from a textual string
- */
-static errr grab_one_basic_flag(monster_race *r_ptr, cptr what)
+
+static errr grab_monster_race_flag(monster_race_flag_set *flags, cptr what)
 {
-	if (lookup_flags(what,
-		flag_tie(&r_ptr->flags1, r_info_flags1),
-		flag_tie(&r_ptr->flags2, r_info_flags2),
-		flag_tie(&r_ptr->flags3, r_info_flags3),
-		flag_tie(&r_ptr->flags7, r_info_flags7),
-		flag_tie(&r_ptr->flags8, r_info_flags8),
-		flag_tie(&r_ptr->flags9, r_info_flags9)))
-	{
-		return 0;
-	}
+#define RF(tier, index, name) \
+	if (streq(what, #name)) \
+	{ \
+		*flags |= BOOST_PP_CAT(RF_,name); \
+		return 0; \
+	};
+#include "monster_race_flag_list.hpp"
+#undef RF
 
 	/* Oops */
 	msg_format("Unknown monster flag '%s'.", what);
@@ -5488,14 +4482,15 @@ static errr grab_one_basic_flag(monster_race *r_ptr, cptr what)
 /*
  * Grab one (spell) flag in a monster_race from a textual string
  */
-static errr grab_one_spell_flag(monster_race *r_ptr, cptr what)
+static errr grab_one_monster_spell_flag(monster_spell_flag_set *flags, cptr what)
 {
-	if (lookup_flags(what,
-		flag_tie(&r_ptr->flags4, r_info_flags4),
-		flag_tie(&r_ptr->flags5, r_info_flags5),
-		flag_tie(&r_ptr->flags6, r_info_flags6)))
+	for (auto const &monster_spell: monster_spells())
 	{
-		return (0);
+		if (streq(what, monster_spell->name))
+		{
+			*flags |= monster_spell->flag_set;
+			return 0;
+		}
 	}
 
 	/* Oops */
@@ -5575,12 +4570,11 @@ errr init_r_info_txt(FILE *fp)
 			/* Ensure empty description */
 			r_ptr->text = my_strdup("");
 
-			/* HACK -- Those ones HAVE to have a set default value */
-			r_ptr->drops.treasure = OBJ_GENE_TREASURE;
-			r_ptr->drops.combat = OBJ_GENE_COMBAT;
-			r_ptr->drops.magic = OBJ_GENE_MAGIC;
-			r_ptr->drops.tools = OBJ_GENE_TOOL;
-			r_ptr->freq_inate = r_ptr->freq_spell = 0;
+			/* Set default drop theme */
+			r_ptr->drops = obj_theme::defaults();
+
+			r_ptr->freq_inate = 0;
+			r_ptr->freq_spell = 0;
 
 			/* Next... */
 			continue;
@@ -5800,7 +4794,7 @@ errr init_r_info_txt(FILE *fp)
 		/* Process 'F' for "Basic Flags" (multiple lines) */
 		if (buf[0] == 'F')
 		{
-			if (0 != grab_one_basic_flag(r_ptr, buf + 2))
+			if (0 != grab_monster_race_flag(&r_ptr->flags, buf + 2))
 			{
 				return (5);
 			}
@@ -5824,7 +4818,7 @@ errr init_r_info_txt(FILE *fp)
 			/* Parse this entry */
 			else
 			{
-				if (0 != grab_one_spell_flag(r_ptr, s))
+				if (0 != grab_one_monster_spell_flag(&r_ptr->spells, s))
 				{
 					return (5);
 				}
@@ -5838,112 +4832,10 @@ errr init_r_info_txt(FILE *fp)
 		return (6);
 	}
 
-	/* Postprocessing */
-	for (i = 1; i < max_r_idx; i++)
-	{
-		/* Invert flag WILD_ONLY <-> RF8_DUNGEON */
-		r_info[i].flags8 ^= 1L;
-
-		/* WILD_TOO without any other wilderness flags enables all flags */
-		if ((r_info[i].flags8 & RF8_WILD_TOO) && !(r_info[i].flags8 & 0x7FFFFFFE))
-			r_info[i].flags8 = 0x0463;
-	}
-
 	/* Success */
 	return (0);
 }
 
-
-/*
- * Grab one (basic) flag in a monster_race from a textual string
- */
-static errr grab_one_basic_ego_flag(monster_ego *re_ptr, cptr what, bool_ add)
-{
-	/* Dispatch to correct set of flags */
-	u32b *f1 = add ? &re_ptr->mflags1 : &re_ptr->nflags1;
-	u32b *f2 = add ? &re_ptr->mflags2 : &re_ptr->nflags2;
-	u32b *f3 = add ? &re_ptr->mflags3 : &re_ptr->nflags3;
-	u32b *f7 = add ? &re_ptr->mflags7 : &re_ptr->nflags7;
-	u32b *f8 = add ? &re_ptr->mflags8 : &re_ptr->nflags8;
-	u32b *f9 = add ? &re_ptr->mflags9 : &re_ptr->nflags9;
-
-	/* Lookup */
-	if (lookup_flags(what,
-		flag_tie(f1, r_info_flags1),
-		flag_tie(f2, r_info_flags2),
-		flag_tie(f3, r_info_flags3),
-		flag_tie(f7, r_info_flags7),
-		flag_tie(f8, r_info_flags8),
-		flag_tie(f9, r_info_flags9)))
-	{
-		return 0;
-	}
-
-	/* Oops */
-	msg_format("Unknown monster flag '%s'.", what);
-
-	/* Failure */
-	return (1);
-}
-
-
-/*
- * Grab one (spell) flag in a monster_race from a textual string
- */
-static errr grab_one_spell_ego_flag(monster_ego *re_ptr, cptr what, bool_ add)
-{
-	/* Dispatch to correct set of flags */
-	u32b *f4 = add ? &re_ptr->mflags4 : &re_ptr->nflags4;
-	u32b *f5 = add ? &re_ptr->mflags5 : &re_ptr->nflags5;
-	u32b *f6 = add ? &re_ptr->mflags6 : &re_ptr->nflags6;
-
-	/* Lookup */
-	if (lookup_flags(what,
-		flag_tie(f4, r_info_flags4),
-		flag_tie(f5, r_info_flags5),
-		flag_tie(f6, r_info_flags6)))
-	{
-		return (0);
-	}
-
-	/* Oops */
-	msg_format("Unknown monster flag '%s'.", what);
-
-	/* Failure */
-	return (1);
-}
-
-/*
- * Grab one (basic) flag in a monster_race from a textual string
- */
-static errr grab_one_ego_flag(monster_ego *re_ptr, cptr what, bool_ must)
-{
-	/* Dispatch to correct set of flags */
-	u32b *f1 = must ? &re_ptr->flags1 : &re_ptr->hflags1;
-	u32b *f2 = must ? &re_ptr->flags2 : &re_ptr->hflags2;
-	u32b *f3 = must ? &re_ptr->flags3 : &re_ptr->hflags3;
-	u32b *f7 = must ? &re_ptr->flags7 : &re_ptr->hflags7;
-	u32b *f8 = must ? &re_ptr->flags8 : &re_ptr->hflags8;
-	u32b *f9 = must ? &re_ptr->flags9 : &re_ptr->hflags9;
-
-	/* Lookup */
-	if (lookup_flags(what,
-		flag_tie(f1, r_info_flags1),
-		flag_tie(f2, r_info_flags2),
-		flag_tie(f3, r_info_flags3),
-		flag_tie(f7, r_info_flags7),
-		flag_tie(f8, r_info_flags8),
-		flag_tie(f9, r_info_flags9)))
-	{
-		return (0);
-	}
-
-	/* Oops */
-	msg_format("Unknown monster flag '%s'.", what);
-
-	/* Failure */
-	return (1);
-}
 
 /*
  * Initialize the "re_info" array, by parsing an ascii "template" file
@@ -6189,7 +5081,7 @@ errr init_re_info_txt(FILE *fp)
 
 			/* Parse this entry */
 			else {
-				if (0 != grab_one_ego_flag(re_ptr, s, TRUE))
+				if (0 != grab_monster_race_flag(&re_ptr->flags, s))
 				{
 					return (5);
 				}
@@ -6219,7 +5111,7 @@ errr init_re_info_txt(FILE *fp)
 
 			/* Parse this entry */
 			else {
-				if (0 != grab_one_ego_flag(re_ptr, s, FALSE))
+				if (0 != grab_monster_race_flag(&re_ptr->hflags, s))
 				{
 					return (5);
 				}
@@ -6232,7 +5124,7 @@ errr init_re_info_txt(FILE *fp)
 		/* Process 'M' for "Basic Monster Flags" (multiple lines) */
 		if (buf[0] == 'M')
 		{
-			if (0 != grab_one_basic_ego_flag(re_ptr, buf + 2, TRUE))
+			if (0 != grab_monster_race_flag(&re_ptr->mflags, buf + 2))
 			{
 				return (5);
 			}
@@ -6249,13 +5141,12 @@ errr init_re_info_txt(FILE *fp)
 			/* XXX XXX XXX Hack -- Read no flags */
 			if (!strcmp(s, "MF_ALL"))
 			{
-				/* No flags */
-				re_ptr->nflags1 = re_ptr->nflags2 = re_ptr->nflags3 = re_ptr->nflags7 = re_ptr->nflags8 = re_ptr->nflags9 = 0xFFFFFFFF;
+				re_ptr->nflags = ~monster_race_flag_set();
 			}
 
 			/* Parse this entry */
 			else {
-				if (0 != grab_one_basic_ego_flag(re_ptr, s, FALSE))
+				if (0 != grab_monster_race_flag(&re_ptr->nflags, s))
 				{
 					return (5);
 				}
@@ -6279,7 +5170,7 @@ errr init_re_info_txt(FILE *fp)
 
 			/* Parse this entry */
 			else {
-				if (0 != grab_one_spell_ego_flag(re_ptr, s, TRUE))
+				if (0 != grab_one_monster_spell_flag(&re_ptr->mspells, s))
 				{
 					return (5);
 				}
@@ -6309,7 +5200,7 @@ errr init_re_info_txt(FILE *fp)
 				if (!strcmp(s, "MF_ALL"))
 				{
 					/* No flags */
-					re_ptr->nflags4 = re_ptr->nflags5 = re_ptr->nflags6 = 0xFFFFFFFF;
+					re_ptr->nspells = ~monster_spell_flag_set();
 
 					/* Start at next entry */
 					s = t;
@@ -6319,7 +5210,7 @@ errr init_re_info_txt(FILE *fp)
 				}
 
 				/* Parse this entry */
-				if (0 != grab_one_spell_ego_flag(re_ptr, s, FALSE)) return (5);
+				if (0 != grab_one_monster_spell_flag(&re_ptr->nspells, s)) return (5);
 
 				/* Start the next entry */
 				s = t;
@@ -6525,49 +5416,6 @@ errr grab_one_dungeon_flag(dungeon_flag_set *flags, const char *str)
 	return (1);
 }
 
-/*
- * Grab one (basic) flag in a monster_race from a textual string
- */
-static errr grab_one_basic_monster_flag(dungeon_info_type *d_ptr, cptr what, byte rule)
-{
-	if (lookup_flags(what,
-		flag_tie(&d_ptr->rules[rule].mflags1, r_info_flags1),
-		flag_tie(&d_ptr->rules[rule].mflags2, r_info_flags2),
-		flag_tie(&d_ptr->rules[rule].mflags3, r_info_flags3),
-		flag_tie(&d_ptr->rules[rule].mflags7, r_info_flags7),
-		flag_tie(&d_ptr->rules[rule].mflags8, r_info_flags8),
-		flag_tie(&d_ptr->rules[rule].mflags9, r_info_flags9)))
-	{
-		return 0;
-	}
-
-	/* Oops */
-	msg_format("Unknown monster flag '%s'.", what);
-
-	/* Failure */
-	return (1);
-}
-
-
-/*
- * Grab one (spell) flag in a monster_race from a textual string
- */
-static errr grab_one_spell_monster_flag(dungeon_info_type *d_ptr, cptr what, byte rule)
-{
-	if (lookup_flags(what,
-		flag_tie(&d_ptr->rules[rule].mflags4, r_info_flags4),
-		flag_tie(&d_ptr->rules[rule].mflags5, r_info_flags5),
-		flag_tie(&d_ptr->rules[rule].mflags6, r_info_flags6)))
-	{
-		return 0;
-	}
-
-	/* Oops */
-	msg_format("Unknown monster flag '%s'.", what);
-
-	/* Failure */
-	return (1);
-}
 
 /*
  * Initialize the "d_info" array, by parsing an ascii "template" file
@@ -6662,11 +5510,8 @@ errr init_d_info_txt(FILE *fp)
 				for (k = 0; k < 5; k++) d_ptr->rules[j].r_char[k] = 0;
 			}
 
-			/* HACK -- Those ones HAVE to have a set default value */
-			d_ptr->objs.treasure = OBJ_GENE_TREASURE;
-			d_ptr->objs.combat = OBJ_GENE_COMBAT;
-			d_ptr->objs.magic = OBJ_GENE_MAGIC;
-			d_ptr->objs.tools = OBJ_GENE_TOOL;
+			/* Set default drop theme */
+			d_ptr->objs = obj_theme::defaults();
 
 			/* The default generator */
 			strcpy(d_ptr->generator, "dungeon");
@@ -6997,7 +5842,7 @@ errr init_d_info_txt(FILE *fp)
 
 			/* Parse this entry */
 			else {
-				if (0 != grab_one_basic_monster_flag(d_ptr, s, rule_num))
+				if (0 != grab_monster_race_flag(&d_ptr->rules[rule_num].mflags, s))
 				{
 					return (5);
 				}
@@ -7013,7 +5858,7 @@ errr init_d_info_txt(FILE *fp)
 			s = buf + 2;
 
 			/* Parse this entry */
-			if (0 != grab_one_spell_monster_flag(d_ptr, s, rule_num))
+			if (0 != grab_one_monster_spell_flag(&d_ptr->rules[rule_num].mspells, s))
 			{
 				return (5);
 			}
@@ -7061,13 +5906,15 @@ static errr grab_one_race_flag(owner_type *ow_ptr, int state, cptr what)
 /*
  * Grab one store flag from a textual string
  */
-static errr grab_one_store_flag(store_info_type *st_ptr, cptr what)
+static errr grab_one_store_flag(store_flag_set *flags, cptr what)
 {
-	/* Scan store flags */
-	if (lookup_flags(what, flag_tie(&st_ptr->flags1, st_info_flags1)))
-	{
-		return 0;
-	}
+#define STF(tier, index, name) \
+	if (streq(what, #name)) { \
+	        *flags |= BOOST_PP_CAT(STF_,name); \
+	        return 0; \
+        }
+#include "store_flag_list.hpp"
+#undef STF
 
 	/* Oops */
 	msg_format("Unknown store flag '%s'.", what);
@@ -7167,13 +6014,14 @@ errr init_st_info_txt(FILE *fp)
 			if (!*s) return (1);
 
 			/* Get the index */
-			st_ptr->table[item_idx][1] = atoi(buf + 2);
+			st_ptr->item_chance[item_idx] = atoi(buf + 2);
 
 			/* Append chars to the name */
-			st_ptr->table[item_idx++][0] = test_item_name(s);
+			st_ptr->item_kind[item_idx] = test_item_name(s);
 
-			st_ptr->table_num = item_idx;
-			assert(st_ptr->table_num <= STORE_CHOICES);
+			item_idx++;
+			st_ptr->item_num = item_idx;
+			assert(st_ptr->item_num <= STORE_CHOICES);
 
 			/* Next... */
 			continue;
@@ -7189,11 +6037,13 @@ errr init_st_info_txt(FILE *fp)
 			                &rar1, &tv1, &sv1)) return (1);
 
 			/* Get the index */
-			st_ptr->table[item_idx][1] = rar1;
+			st_ptr->item_chance[item_idx] = rar1;
 			/* Hack -- 256 as a sval means all possible items */
-			st_ptr->table[item_idx++][0] = (sv1 < 256) ? lookup_kind(tv1, sv1) : tv1 + 10000;
+			st_ptr->item_kind[item_idx] = (sv1 < 256) ? lookup_kind(tv1, sv1) : tv1 + 10000;
 
-			st_ptr->table_num = item_idx;
+			item_idx++;
+			st_ptr->item_num = item_idx;
+			assert(st_ptr->item_num <= STORE_CHOICES);
 
 			/* Next... */
 			continue;
@@ -7247,7 +6097,10 @@ errr init_st_info_txt(FILE *fp)
 		/* Process 'F' for "store Flags" (multiple lines) */
 		if (buf[0] == 'F')
 		{
-			if (0 != grab_one_store_flag(st_ptr, buf + 2)) return (5);
+			if (0 != grab_one_store_flag(&st_ptr->flags, buf + 2))
+			{
+				return (5);
+			}
 
 			/* Next... */
 			continue;
@@ -8165,10 +7018,11 @@ static errr process_dungeon_file_aux(char *buf, int *yval, int *xval, int xvalst
 				   Let's just HACK around one observed bug: Shadow Cloak
 				   of Luthien [Globe of Light] */
 				{
-					u32b f1, f2, f3, f4, f5, esp;
-					object_flags(q_ptr, &f1, &f2, &f3, &f4, &f5, &esp);
-					if (f5 & TR5_SPELL_CONTAIN)
+					auto const flags = object_flags(q_ptr);
+					if (flags & TR_SPELL_CONTAIN)
+					{
 						q_ptr->pval2 = -1;
+					}
 				}
 
 				/* Drop the artifact */

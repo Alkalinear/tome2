@@ -1,7 +1,9 @@
 #include "corrupt.hpp"
 
 #include "init1.hpp"
+#include "object_flag.hpp"
 #include "player_race.hpp"
+#include "player_race_flag.hpp"
 #include "player_race_mod.hpp"
 #include "player_type.hpp"
 #include "stats.hpp"
@@ -59,10 +61,10 @@ static void player_gain_vampire_teeth()
 
 	rmp_ptr = &race_mod_info[SUBRACE_SAVE];
 	subrace_add_power(rmp_ptr, PWR_VAMPIRISM);
-	rmp_ptr->flags1 = rmp_ptr->flags1
-		| PR1_VAMPIRE
-		| PR1_UNDEAD
-		| PR1_NO_SUBRACE_CHANGE;
+	rmp_ptr->flags = rmp_ptr->flags
+		| PR_VAMPIRE
+		| PR_UNDEAD
+		| PR_NO_SUBRACE_CHANGE;
 }
 
 static void player_gain_vampire_strength()
@@ -104,15 +106,15 @@ static void player_gain_vampire()
 	}
 
 	/* Bonus/and .. not bonus :) */
-	rmp_ptr->flags1 = rmp_ptr->flags1 | PR1_HURT_LITE;
-	rmp_ptr->oflags2[2] = rmp_ptr->oflags2[2]
-		| TR2_RES_POIS
-		| TR2_RES_NETHER
-		| TR2_RES_COLD
-		| TR2_RES_DARK
-		| TR2_HOLD_LIFE;
-	rmp_ptr->oflags3[2] = rmp_ptr->oflags3[2]
-		| TR3_LITE1;
+	rmp_ptr->flags = rmp_ptr->flags | PR_HURT_LITE;
+	rmp_ptr->oflags[2] = rmp_ptr->oflags[2]
+		| TR_RES_POIS
+		| TR_RES_NETHER
+		| TR_RES_COLD
+		| TR_RES_DARK
+		| TR_HOLD_LIFE;
+	rmp_ptr->oflags[2] = rmp_ptr->oflags[2]
+		| TR_LITE1;
 }
 
 /**
@@ -765,7 +767,7 @@ static bool_ player_allow_corruption(int corruption_idx)
 	/* Vampire teeth is special */
 	if (corruption_idx == CORRUPT_VAMPIRE_TEETH)
 	{
-		if (race_flags1_p(PR1_NO_SUBRACE_CHANGE))
+		if (race_flags_p(PR_NO_SUBRACE_CHANGE))
 		{
 			return TRUE;
 		}

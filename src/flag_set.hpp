@@ -16,6 +16,9 @@ private:
 	std::uint32_t m_data[tiers];
 
 public:
+	static constexpr const std::size_t nbits = tiers * 32;
+
+public:
 
 	constexpr flag_set()
 		: m_data { 0 }
@@ -47,6 +50,14 @@ public:
 		return f;
 	}
 
+	static constexpr flag_set make_bit(std::size_t ibit)
+	{
+		assert(ibit < nbits);
+		flag_set f;
+		f.m_data[ibit / 32] = (1UL << (ibit % 32));
+		return f;
+	}
+
 	constexpr std::size_t size() const
 	{
 		return tiers;
@@ -64,6 +75,19 @@ public:
 		return true;
 	}
 
+	constexpr std::size_t count() const
+	{
+		std::size_t n = 0;
+		for (std::size_t i = 0; i < nbits; i++)
+		{
+			if (bit(i))
+			{
+				n += 1;
+			}
+		}
+		return n;
+	}
+
 	uint32_t &operator[](std::size_t i)
 	{
 		assert(i < tiers);
@@ -76,9 +100,32 @@ public:
 		return m_data[i];
 	}
 
-	constexpr operator bool() const
+	explicit constexpr operator bool() const
 	{
 		return !empty();
+	}
+
+	constexpr bool operator == (flag_set const &other) const
+	{
+		for (std::size_t i = 0; i < tiers; i++)
+		{
+			if (m_data[i] != other.m_data[i])
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	constexpr bool operator != (flag_set const &other) const
+	{
+		return !(*this == other);
+	}
+
+	constexpr bool bit(std::size_t i) const
+	{
+		assert(i < nbits);
+		return (m_data[i / 32] & (1UL << (i % 32)));
 	}
 
 	flag_set &operator |= (flag_set const &other)
@@ -115,6 +162,16 @@ public:
 		for (std::size_t i = 0; i < tiers; i++)
 		{
 			f.m_data[i] = m_data[i] & other.m_data[i];
+		}
+		return f;
+	}
+
+	constexpr flag_set operator ~ () const
+	{
+		flag_set f;
+		for (std::size_t i = 0; i < tiers; i++)
+		{
+			f.m_data[i] = ~m_data[i];
 		}
 		return f;
 	}

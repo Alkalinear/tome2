@@ -23,8 +23,11 @@
 #include "modules.hpp"
 #include "monster_ego.hpp"
 #include "monster_race.hpp"
+#include "monster_race_flag.hpp"
 #include "monster_type.hpp"
+#include "object_flag.hpp"
 #include "object_kind.hpp"
+#include "object_type.hpp"
 #include "owner_type.hpp"
 #include "player_class.hpp"
 #include "player_race.hpp"
@@ -276,7 +279,7 @@ namespace {
 
 		static void allocate()
 		{
-			f_info = make_array<feature_type>(max_f_idx);
+			f_info = new feature_type[max_f_idx];
 		}
 
 		static errr parse(FILE *fp)
@@ -292,7 +295,7 @@ namespace {
 
 		static void allocate()
 		{
-			k_info = make_array<object_kind>(max_k_idx);
+			k_info = new object_kind[max_k_idx];
 		}
 
 		static errr parse(FILE *fp)
@@ -308,7 +311,7 @@ namespace {
 
 		static void allocate()
 		{
-			set_info = make_array<set_type>(max_set_idx);
+			set_info = new set_type[max_set_idx];
 		}
 
 		static errr parse(FILE *fp)
@@ -324,7 +327,7 @@ namespace {
 
 		static void allocate()
 		{
-			a_info = make_array<artifact_type>(max_a_idx);
+			a_info = new artifact_type[max_a_idx];
 		}
 
 		static errr parse(FILE *fp)
@@ -340,7 +343,7 @@ namespace {
 
 		static void allocate()
 		{
-			s_info = make_array<skill_type>(max_s_idx);
+			s_info = new skill_type[max_s_idx];
 		}
 
 		static errr parse(FILE *fp)
@@ -372,7 +375,7 @@ namespace {
 
 		static void allocate()
 		{
-			e_info = make_array<ego_item_type>(max_e_idx);
+			e_info = new ego_item_type[max_e_idx];
 		}
 
 		static errr parse(FILE *fp)
@@ -388,7 +391,7 @@ namespace {
 
 		static void allocate()
 		{
-			ra_info = make_array<randart_part_type>(max_ra_idx);
+			ra_info = new randart_part_type[max_ra_idx];
 		}
 
 		static errr parse(FILE *fp)
@@ -404,7 +407,7 @@ namespace {
 
 		static void allocate()
 		{
-			r_info = make_array<monster_race>(max_r_idx);
+			r_info = new monster_race[max_r_idx];
 		}
 
 		static errr parse(FILE *fp)
@@ -420,7 +423,7 @@ namespace {
 
 		static void allocate()
 		{
-			re_info = make_array<monster_ego>(max_re_idx);
+			re_info = new monster_ego[max_re_idx];
 		}
 
 		static errr parse(FILE *fp)
@@ -452,7 +455,7 @@ namespace {
 
 		static void allocate()
 		{
-			st_info = make_array<store_info_type>(max_st_idx);
+			st_info = new store_info_type[max_st_idx];
 		}
 
 		static errr parse(FILE *fp)
@@ -500,7 +503,7 @@ namespace {
 
 		static void allocate()
 		{
-			wf_info = make_array<wilderness_type_info>(max_wf_idx);
+			wf_info = new wilderness_type_info[max_wf_idx];
 		}
 
 		static errr parse(FILE *fp)
@@ -548,9 +551,9 @@ namespace {
 
 		static void allocate()
 		{
-			race_info = make_array<player_race>(max_rp_idx);
-			race_mod_info = make_array<player_race_mod>(max_rmp_idx);
-			class_info = make_array<player_class>(max_c_idx);
+			race_info = new player_race[max_rp_idx];
+			race_mod_info = new player_race_mod[max_rmp_idx];
+			class_info = new player_class[max_c_idx];
 			bg = make_array<hist_type>(max_bg_idx);
 			meta_class_info = make_array<meta_class_type>(max_mc_idx);
 			for (std::size_t i = 0; i < max_mc_idx; i++)
@@ -675,22 +678,17 @@ static errr init_misc(void)
  */
 static errr init_towns(void)
 {
-	int i = 0, j = 0;
+	town_info = new town_type[max_towns];
 
-	/*** Prepare the Towns ***/
-
-	/* Allocate the towns */
-	town_info = make_array<town_type>(max_towns);
-
-	for (i = 1; i < max_towns; i++)
+	for (std::size_t i = 1; i < max_towns; i++)
 	{
 		if (i <= max_real_towns) town_info[i].flags |= (TOWN_REAL);
 
 		/* Allocate the stores */
-		town_info[i].store = make_array<store_type>(max_st_idx);
+		town_info[i].store = new store_type[max_st_idx];
 
 		/* Fill in each store */
-		for (j = 0; j < max_st_idx; j++)
+		for (std::size_t j = 0; j < max_st_idx; j++)
 		{
 			/* Access the store */
 			store_type *st_ptr = &town_info[i].store[j];
@@ -702,25 +700,25 @@ static errr init_towns(void)
 			st_ptr->stock_size = 0;
 		}
 	}
+
 	return 0;
 }
 
 void create_stores_stock(int t)
 {
-	int j;
 	town_type *t_ptr = &town_info[t];
 
 	if (t_ptr->stocked) return;
 
-	for (j = 0; j < max_st_idx; j++)
+	for (int j = 0; j < max_st_idx; j++)
 	{
 		store_type *st_ptr = &t_ptr->store[j];
 
 		/* Assume full stock */
 		st_ptr->stock_size = st_info[j].max_obj;
 
-		/* Allocate the stock */
-		st_ptr->stock = make_array<object_type>(st_ptr->stock_size);
+		/* Reserve space for stock */
+		st_ptr->stock.reserve(st_ptr->stock_size);
 	}
 	t_ptr->stocked = TRUE;
 }
@@ -730,15 +728,13 @@ void create_stores_stock(int t)
  */
 static errr init_wilderness(void)
 {
-	int i;
-
 	/* Allocate the wilderness (two-dimension array) */
 	wild_map = make_array<wilderness_map *>(max_wild_y);
 
 	/* Init the other pointers */
-	for (i = 0; i < max_wild_y; i++)
+	for (std::size_t i = 0; i < max_wild_y; i++)
 	{
-		wild_map[i] = make_array<wilderness_map>(max_wild_x);
+		wild_map[i] = new wilderness_map[max_wild_x];
 	}
 
 	/* No encounter right now */
@@ -769,7 +765,7 @@ static errr init_other(void)
 
 
 	/* Allocate and Wipe the object list */
-	o_list = make_array<object_type>(max_o_idx);
+	o_list = new object_type[max_o_idx];
 
 	/* Allocate and Wipe the monster list */
 	m_list = new monster_type[max_m_idx];
@@ -1103,28 +1099,26 @@ static void init_guardians(void)
 		{
 			monster_race *r_ptr = &r_info[d_ptr->final_guardian];
 
-			r_ptr->flags9 |= RF9_SPECIAL_GENE;
+			r_ptr->flags |= RF_SPECIAL_GENE;
 
 			/* Mark the final artifact */
 			if (d_ptr->final_artifact)
 			{
 				artifact_type *a_ptr = &a_info[d_ptr->final_artifact];
-
-				a_ptr->flags4 |= TR4_SPECIAL_GENE;
+				a_ptr->flags |= TR_SPECIAL_GENE;
 			}
 
 			/* Mark the final object */
 			if (d_ptr->final_object)
 			{
 				object_kind *k_ptr = &k_info[d_ptr->final_object];
-
-				k_ptr->flags4 |= TR4_SPECIAL_GENE;
+				k_ptr->flags |= TR_SPECIAL_GENE;
 			}
 
 			/* Give randart if there are no final artifacts */
 			if (!(d_ptr->final_artifact) && !(d_ptr->final_object))
 			{
-				r_ptr->flags7 |= RF7_DROP_RANDART;
+				r_ptr->flags |= RF_DROP_RANDART;
 			}
 		}
 	}

@@ -10,6 +10,7 @@
 
 #include "cave.hpp"
 #include "cave_type.hpp"
+#include "feature_flag.hpp"
 #include "feature_type.hpp"
 #include "hook_wild_gen_in.hpp"
 #include "hooks.hpp"
@@ -20,6 +21,7 @@
 #include "options.hpp"
 #include "player_type.hpp"
 #include "store_info_type.hpp"
+#include "store_flag.hpp"
 #include "tables.hpp"
 #include "town_type.hpp"
 #include "util.hpp"
@@ -522,7 +524,7 @@ void wilderness_gen()
 			else
 			{
 				/* Darken "boring" features */
-				if (!(f_info[c_ptr->feat].flags1 & FF1_REMEMBER))
+				if (!(f_info[c_ptr->feat].flags & FF_REMEMBER))
 				{
 					/* Forget the grid */
 					c_ptr->info &= ~(CAVE_GLOW | CAVE_MARK);
@@ -889,9 +891,9 @@ static int get_shops(int *rooms)
 	{
 		int chance = 50;
 
-		if (st_info[n].flags1 & SF1_COMMON) chance += 30;
-		if (st_info[n].flags1 & SF1_RARE) chance -= 20;
-		if (st_info[n].flags1 & SF1_VERY_RARE) chance -= 30;
+		if (st_info[n].flags & STF_COMMON) chance += 30;
+		if (st_info[n].flags & STF_RARE) chance -= 20;
+		if (st_info[n].flags & STF_VERY_RARE) chance -= 30;
 
 		if (!magik(chance)) continue;
 
@@ -899,7 +901,7 @@ static int get_shops(int *rooms)
 			if (rooms[i] == n)
 				continue;
 
-		if (st_info[n].flags1 & SF1_RANDOM) rooms[num++] = n;
+		if (st_info[n].flags & STF_RANDOM) rooms[num++] = n;
 	}
 
 	return num;
@@ -915,7 +917,7 @@ static void set_border(int y, int x)
 
 	/* Was a floor */
 	if (cave_floor_bold(y, x) ||
-	                (f_info[cave[y][x].feat].flags1 & FF1_DOOR))
+	                (f_info[cave[y][x].feat].flags & FF_DOOR))
 	{
 		cave_set_feat(y, x, FEAT_DOOR_HEAD);
 	}
